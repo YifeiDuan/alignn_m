@@ -203,9 +203,9 @@ def train_tasks(
                 f = open("id_prop.csv", "w")
                 for jj, j in train_df.iterrows():       # fill in the id_prop.csv file
                     id = j.name
-                    atoms = pmg_to_atoms(j.structure)
+                    atoms = pmg_to_atoms(j.structure)   # convert pymatgen object to JARVIS.Atoms
                     pos_name = id
-                    atoms.write_poscar(pos_name)
+                    atoms.write_poscar(pos_name)        # the mb-[prop]-[id] poscar object
                     val = j[target]
                     line = str(pos_name) + "," + str(val) + "\n"
                     f.write(line)

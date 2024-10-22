@@ -202,6 +202,7 @@ def train_for_folder(
     train_grad = False
     train_stress = False
     train_atom = False
+    ##### All 3 are kept false in the config saved through default matbench run.py
     if config.model.calculate_gradient and config.model.gradwise_weight != 0:
         train_grad = True
     else:
@@ -230,10 +231,11 @@ def train_for_folder(
     n_outputs = []
     dataset = []
     for i in dat:
+    ##### in the case of id_prop.csv, dat is a list of df rows
         info = {}
         if id_prop_csv_file:
-            file_name = i[0]
-            tmp = [float(j) for j in i[1:]]  # float(i[1])
+            file_name = i[0]    # file_name "mb-[prop]-[id]" (e.g. "mb-jdft2d-001"), storing the pymatgen structural info of ONE specific crystal
+            tmp = [float(j) for j in i[1:]]  # float(i[1])  # target prop value as float
             info["jid"] = file_name
 
             if len(tmp) == 1:
@@ -243,7 +245,7 @@ def train_for_folder(
                 n_outputs.append(tmp)
             info["target"] = tmp
             file_path = os.path.join(root_dir, file_name)
-            if file_format == "poscar":
+            if file_format == "poscar":     # Load in the datapoint-wise structure data (saved in poscar format from Atoms object)
                 atoms = Atoms.from_poscar(file_path)
             elif file_format == "cif":
                 atoms = Atoms.from_cif(file_path)
@@ -374,7 +376,7 @@ def train_for_folder(
         test_loader,
         prepare_batch,
     ) = get_train_val_loaders(
-        dataset_array=dataset,
+        dataset_array=dataset,  # dataset is a list of info {"jid":id, "atoms": Atoms as dict, "target": prop value}
         target="target",
         target_atomwise=target_atomwise,
         target_grad=target_grad,
