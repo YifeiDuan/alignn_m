@@ -150,7 +150,7 @@ def train_tasks(
 
                 cmd = (
                     python_executable + " "+
-                    "train_alignn.py --root_dir "
+                    "train_folder.py --root_dir "
                     + fold_name
                     + " --config_name "
                     + fold_name
@@ -158,7 +158,6 @@ def train_tasks(
                     + fname
                     + " --file_format="
                     + file_format
-                    + " --keep_data_order=True"
                     + " --classification_threshold=0.01"
                     + " --output_dir="
                     + outdir_name
@@ -269,7 +268,7 @@ def train_tasks(
                 # )
                 cmd = (
                     python_executable + " "+
-                    "train_alignn.py --root_dir "
+                    "train_folder.py --root_dir "
                     + fold_name
                     + " --config_name "
                     + fold_name
@@ -277,7 +276,6 @@ def train_tasks(
                     + fname
                     + " --file_format="
                     + file_format
-                    + " --keep_data_order=True"
                     + " --output_dir="
                     + outdir_name
                 )
