@@ -18,6 +18,7 @@ from sklearn.metrics import mean_absolute_error, roc_auc_score
 from matbench.bench import MatbenchBenchmark
 from matbench.constants import CLF_KEY
 
+##### Initalize MatbenchBenchmark object that configures prop tasks #####
 mb = MatbenchBenchmark(
     autoload=False,
     subset=[
@@ -39,7 +40,9 @@ def train_tasks(
 ):
     """Train MatBench clalssification and regression tasks."""
     for task in mb.tasks:
-        task.load()
+        ### mb.tasks is a defined method instead of attr, it returns mb.tasks_map.values, which is part of the attr "tasks_map"
+        ### task is a MatbenchTask object defined in matbench.task
+        task.load() # Load prop task dataset
         if task.metadata.task_type == CLF_KEY:
             classification = True
         else:
@@ -147,7 +150,7 @@ def train_tasks(
                 cmd = (
                     "train_alignn.py --root_dir "
                     + fold_name
-                    + " --config "
+                    + " --config_name "
                     + fold_name
                     + "/"
                     + fname
@@ -170,6 +173,7 @@ def train_tasks(
         if not classification:
             maes = []
             for ii, fold in enumerate(task.folds):
+                ### Benchmarking splits are acquired with MatbenchTask methods get_train_and_val_data & get_test_data
                 train_df = task.get_train_and_val_data(fold, as_type="df")
                 test_df = task.get_test_data(
                     fold, include_target=True, as_type="df"
@@ -193,10 +197,10 @@ def train_tasks(
                 )
                 if not os.path.exists(fold_name):
                     os.makedirs(fold_name)
-                os.chdir(fold_name)
+                os.chdir(fold_name)     # create a folder for the current fold of the current prop dataset, and change the working directory here
                 # ALIGNN requires the id_prop.csv file
                 f = open("id_prop.csv", "w")
-                for jj, j in train_df.iterrows():
+                for jj, j in train_df.iterrows():       # fill in the id_prop.csv file
                     id = j.name
                     atoms = pmg_to_atoms(j.structure)
                     pos_name = id
@@ -238,7 +242,7 @@ def train_tasks(
                 fname = "config_fold_" + str(ii) + ".json"
                 dumpjson(data=config, filename=fname)
                 f.close()
-                os.chdir("..")
+                os.chdir("..")      # change working directory back to the parent directory of .ipynb nb that calls run.py
                 outdir_name = (
                     task.dataset_name
                     + "_"
@@ -264,7 +268,7 @@ def train_tasks(
                 cmd = (
                     "train_alignn.py --root_dir "
                     + fold_name
-                    + " --config "
+                    + " --config_name "
                     + fold_name
                     + "/"
                     + fname
@@ -275,7 +279,7 @@ def train_tasks(
                     + outdir_name
                 )
                 print(cmd)
-                os.system(cmd)
+                os.system(cmd)      # executes the cmd line
                 test_csv = outdir_name + "/prediction_results_test_set.csv"
                 df = pd.read_csv(test_csv)
                 target_vals = df.target.values
@@ -335,10 +339,13 @@ def compile_results(key="matbench_phonons", regression=True):
 
 
 if __name__ == "__main__":
+    ##### Load config file that contains model hyperparams #####
     config_template = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "config_example.json")
     )
     config = loadjson(config_template)
+
+    ##### Run the training loop for all tasks in mb #####
     train_tasks(mb=mb, config_template=config_template, file_format="poscar")
 
     run_dir = "."
