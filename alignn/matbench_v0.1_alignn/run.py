@@ -148,6 +148,7 @@ def train_tasks(
                 # )
 
                 cmd = (
+                    "python " +
                     "train_alignn.py --root_dir "
                     + fold_name
                     + " --config_name "
@@ -266,6 +267,7 @@ def train_tasks(
                 #     + outdir_name
                 # )
                 cmd = (
+                    "python " +
                     "train_alignn.py --root_dir "
                     + fold_name
                     + " --config_name "
