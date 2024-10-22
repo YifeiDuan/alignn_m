@@ -6,7 +6,7 @@
 # pip install alignn matbench dgl-cu111
 
 import glob
-import os
+import os, sys
 from collections import defaultdict
 
 import numpy as np
@@ -34,6 +34,7 @@ mb = MatbenchBenchmark(
     ],
 )
 
+python_executable = sys.executable
 
 def train_tasks(
     mb=None, config_template="config_example.json", file_format="poscar"
@@ -148,7 +149,7 @@ def train_tasks(
                 # )
 
                 cmd = (
-                    "python " +
+                    python_executable +
                     "train_alignn.py --root_dir "
                     + fold_name
                     + " --config_name "
@@ -267,7 +268,7 @@ def train_tasks(
                 #     + outdir_name
                 # )
                 cmd = (
-                    "python " +
+                    python_executable +
                     "train_alignn.py --root_dir "
                     + fold_name
                     + " --config_name "
@@ -346,12 +347,6 @@ if __name__ == "__main__":
         os.path.join(os.path.dirname(__file__), "config_example.json")
     )
     config = loadjson(config_template)
-
-    cmd = (
-        "conda activate yifei_matbench"
-    )
-    print(cmd)
-    os.system(cmd)
 
     ##### Run the training loop for all tasks in mb #####
     train_tasks(mb=mb, config_template=config_template, file_format="poscar")
