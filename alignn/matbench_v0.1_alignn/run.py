@@ -347,6 +347,12 @@ if __name__ == "__main__":
     )
     config = loadjson(config_template)
 
+    cmd = (
+        "conda activate yifei_matbench"
+    )
+    print(cmd)
+    os.system(cmd)
+
     ##### Run the training loop for all tasks in mb #####
     train_tasks(mb=mb, config_template=config_template, file_format="poscar")
 
