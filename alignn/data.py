@@ -238,7 +238,7 @@ def get_train_val_loaders(
                 tmp.append(ii)
             print("Made all qm9_dgl")
             d = tmp
-        for i in d:
+        for i in d:     # d = dataset_array, in the matbench case, a list of {"jid":id, "atoms": Atoms as dict, "target": prop value}
             if isinstance(i[target], list):  # multioutput target
                 all_targets.append(torch.tensor(i[target]))
                 dat.append(i)
@@ -247,7 +247,7 @@ def get_train_val_loaders(
                 i[target] is not None
                 and i[target] != "na"
                 and not math.isnan(i[target])
-            ):
+            ):  # single target
                 if target_multiplication_factor is not None:
                     i[target] = i[target] * target_multiplication_factor
                 if classification_threshold is not None:
@@ -279,6 +279,7 @@ def get_train_val_loaders(
             keep_data_order=keep_data_order,
         )
         ids_train_val_test = {}
+        ##### dat: a list of {"jid":id, "atoms": Atoms as dict, "target": prop value}
         ids_train_val_test["id_train"] = [dat[i][id_tag] for i in id_train]
         ids_train_val_test["id_val"] = [dat[i][id_tag] for i in id_val]
         ids_train_val_test["id_test"] = [dat[i][id_tag] for i in id_test]
@@ -363,6 +364,7 @@ def get_train_val_loaders(
             use_ddp = False
             train_sampler = None
             val_sampler = None
+            
         tmp_name = filename + "train_data"
         train_data = get_torch_dataset(
             dataset=dataset_train,

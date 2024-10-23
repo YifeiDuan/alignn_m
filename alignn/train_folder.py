@@ -405,7 +405,7 @@ def train_for_folder(
         classification_threshold=config.classification_threshold,
         target_multiplication_factor=config.target_multiplication_factor,
         standard_scalar_and_pca=config.standard_scalar_and_pca,
-        keep_data_order=config.keep_data_order,
+        keep_data_order=True,   # Needs to always keep this true, as the saved id_prop.csv is ordered by train-val-test
         output_dir=config.output_dir,
         use_lmdb=config.use_lmdb,
     )
