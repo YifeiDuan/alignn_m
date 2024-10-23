@@ -10,7 +10,7 @@ import sys
 import json
 import zipfile
 from alignn.data import get_train_val_loaders
-from alignn.train import train_dgl
+from alignn.train import train_dgl_prop
 from alignn.config import TrainingConfig
 from jarvis.db.jsonutils import loadjson
 import argparse
@@ -414,7 +414,7 @@ def train_for_folder(
     # world_size = torch.cuda.device_count()
     print("rank", rank)
     print("world_size", world_size)
-    train_dgl(
+    train_dgl_prop(
         config,
         model=model,    # None in the case of matbench
         train_val_test_loaders=[
