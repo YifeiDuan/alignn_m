@@ -416,7 +416,7 @@ def train_for_folder(
     print("world_size", world_size)
     train_dgl(
         config,
-        model=model,
+        model=model,    # None in the case of matbench
         train_val_test_loaders=[
             train_loader,
             val_loader,

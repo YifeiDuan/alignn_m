@@ -18,6 +18,7 @@ from torch import nn
 from alignn.data import get_train_val_loaders
 from alignn.config import TrainingConfig
 from alignn.models.alignn_atomwise import ALIGNNAtomWise
+from alignn.models.alignn import ALIGNN
 from jarvis.db.jsonutils import dumpjson
 import json
 import pprint
@@ -139,6 +140,7 @@ def train_dgl(
     classification = False
     tmp = config.dict()
     f = open(os.path.join(config.output_dir, "config.json"), "w")
+    # tmp = config.dict() is written into f: matbench_[prop]_[XXX]_outdir_[fold]/config.json
     f.write(json.dumps(tmp, indent=4))
     f.close()
     global tmp_output_dir
@@ -152,7 +154,7 @@ def train_dgl(
         line_graph = True
     if world_size > 1:
         use_ddp = True
-    else:
+    else:  # if world_size == 1, and cuda available, then use the single GPU
         use_ddp = False
         device = "cpu"
         if torch.cuda.is_available():
@@ -197,21 +199,22 @@ def train_dgl(
             output_dir=config.output_dir,
             use_lmdb=config.use_lmdb,
         )
-    else:
+    else: # specify train, val, test loaders
         train_loader = train_val_test_loaders[0]
         val_loader = train_val_test_loaders[1]
         test_loader = train_val_test_loaders[2]
         prepare_batch = train_val_test_loaders[3]
     # rank=0
-    if use_ddp:
+    if use_ddp:    # multiple GPUs
         device = torch.device(f"cuda:{rank}")
     prepare_batch = partial(prepare_batch, device=device)
     if classification:
         config.model.classification = True
     _model = {
         "alignn_atomwise": ALIGNNAtomWise,
+        "alignn": ALIGNN    # Added this b.c. matbench run.py configs alignn instead of align_atomwise
     }
-    if config.random_seed is not None:
+    if config.random_seed is not None:  # run.py configs random_seed = 123
         random.seed(config.random_seed)
         torch.manual_seed(config.random_seed)
         np.random.seed(config.random_seed)
@@ -229,6 +232,7 @@ def train_dgl(
         torch.use_deterministic_algorithms(True)
     if model is None:
         net = _model.get(config.model.name)(config.model)
+        # matbench config.model.name == "alignn"
     else:
         net = model
 
