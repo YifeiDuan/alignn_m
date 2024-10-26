@@ -335,6 +335,7 @@ def train_dgl_prop(
                     # print('result["out"]',result["out"])
                     # print('dats[2]',dats[2])
                     loss = criterion(
+                        # FIXME:result <- alignn.py forward
                         result["out"],
                         dats[-1].to(device),
                         # result["out"], dats[2].to(device)
@@ -571,7 +572,6 @@ def train_dgl_prop(
             config.write_predictions
             and not classification
             and config.model.output_features == 1
-            and config.model.gradwise_weight == 0
         ):
             best_model.eval()
             # net.eval()
