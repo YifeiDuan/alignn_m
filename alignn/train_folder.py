@@ -362,7 +362,7 @@ def train_for_folder(
     # if multioutput and lists_length_equal:
     #    config.model.output_features = len(n_outputs[0])
     # else:
-    #    # TODO: Pad with NaN
+    #    # Pad with NaN
     #    if not lists_length_equal:
     #        raise ValueError("Make sure the outputs are of same size.")
     #    else:

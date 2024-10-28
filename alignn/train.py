@@ -27,6 +27,8 @@ import warnings
 import time
 from sklearn.metrics import roc_auc_score
 
+from IPython import embed
+
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 torch.set_default_dtype(torch.float32)
 
@@ -334,6 +336,7 @@ def train_dgl_prop(
                 if config.model.output_features is not None:
                     # print('result["out"]',result["out"])
                     # print('dats[2]',dats[2])
+                    embed()
                     loss = criterion(
                         # FIXME:result <- alignn.py forward
                         result["out"],
