@@ -334,19 +334,19 @@ def train_dgl_prop(
 
                 loss = 0
                 if config.model.output_features is not None:
-                    # print('result["out"]',result["out"])
+                    # print('result',result)
                     # print('dats[2]',dats[2])
                     embed()
                     loss = criterion(
                         # FIXME:result <- alignn.py forward
-                        result["out"],
+                        result,
                         dats[-1].to(device),
-                        # result["out"], dats[2].to(device)
+                        # result, dats[2].to(device)
                     )
                     info["target_out"] = dats[-1].cpu().numpy().tolist()
                     # info["target_out"] = dats[2].cpu().numpy().tolist()
                     info["pred_out"] = (
-                        result["out"].cpu().detach().numpy().tolist()
+                        result.cpu().detach().numpy().tolist()
                     )
                 train_result.append(info)
                 loss.backward()
@@ -384,11 +384,11 @@ def train_dgl_prop(
                 loss = 0
                 if config.model.output_features is not None:
                     loss = criterion(
-                        result["out"], dats[-1].to(device)
+                        result, dats[-1].to(device)
                     )
                     info["target_out"] = dats[-1].cpu().numpy().tolist()
                     info["pred_out"] = (
-                        result["out"].cpu().detach().numpy().tolist()
+                        result.cpu().detach().numpy().tolist()
                     )
 
                 val_result.append(info)
@@ -476,14 +476,14 @@ def train_dgl_prop(
                     config.model.output_features is not None
                     and not classification
                 ):
-                    # print('result["out"]',result["out"])
+                    # print('result',result)
                     # print('dats[2]',dats[2])
                     loss = criterion(
-                        result["out"], dats[-1].to(device)
+                        result, dats[-1].to(device)
                     )
                     info["target_out"] = dats[-1].cpu().numpy().tolist()
                     info["pred_out"] = (
-                        result["out"].cpu().detach().numpy().tolist()
+                        result.cpu().detach().numpy().tolist()
                     )
 
                 test_result.append(info)
