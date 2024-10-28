@@ -336,9 +336,7 @@ def train_dgl_prop(
                 if config.model.output_features is not None:
                     # print('result',result)
                     # print('dats[2]',dats[2])
-                    embed()
                     loss = criterion(
-                        # FIXME:result <- alignn.py forward
                         result,
                         dats[-1].to(device),
                         # result, dats[2].to(device)
