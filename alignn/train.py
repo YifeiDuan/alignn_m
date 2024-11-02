@@ -278,6 +278,7 @@ def train_dgl_prop(
             # natoms_batch=False
             # print ('lendat',len(dat))
             for i in dat:
+                ### FIXME: i["target"] keyerror
                 if i["target"]:
                     for j, k in zip(i["target_out"], i["pred_out"]):
                         # if config.normalize_graph_level_loss and
