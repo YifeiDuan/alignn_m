@@ -515,7 +515,7 @@ def train_dgl_prop(
                 ids = test_loader.dataset.ids  # [test_loader.dataset.indices]
                 for dat, id in zip(test_loader, ids):
                     g, lg, target = dat
-                    out_data = best_model([g.to(device), lg.to(device)])["out"]
+                    out_data = best_model([g.to(device), lg.to(device)])
                     # out_data = net([g.to(device), lg.to(device)])["out"]
                     # out_data = torch.exp(out_data.cpu())
                     # print('target',target)
@@ -549,7 +549,7 @@ def train_dgl_prop(
                 ids = test_loader.dataset.ids  # [test_loader.dataset.indices]
                 for dat, id in zip(test_loader, ids):
                     g, lg, target = dat
-                    out_data = best_model([g.to(device), lg.to(device)])["out"]
+                    out_data = best_model([g.to(device), lg.to(device)])
                     # out_data = net([g.to(device), lg.to(device)])["out"]
                     out_data = out_data.cpu().numpy().tolist()
                     if config.standard_scalar_and_pca:
@@ -589,9 +589,8 @@ def train_dgl_prop(
                 ids = test_loader.dataset.ids  # [test_loader.dataset.indices]
                 for dat, id in zip(test_loader, ids):
                     g, lg, target = dat
-                    # FIXME: IndexError: too many indices for tensor of dimension 0
-                    embed()
-                    out_data = best_model([g.to(device), lg.to(device)])["out"]
+                    # out_data from ALIGNN is just a scalar tensor, no index
+                    out_data = best_model([g.to(device), lg.to(device)])
                     # out_data = net([g.to(device), lg.to(device)])["out"]
                     out_data = out_data.cpu().numpy().tolist()
                     if config.standard_scalar_and_pca:
@@ -628,7 +627,7 @@ def train_dgl_prop(
                 ids = train_loader.dataset.ids  # [test_loader.dataset.indices]
                 for dat, id in zip(train_loader, ids):
                     g, lg, target = dat
-                    out_data = best_model([g.to(device), lg.to(device)])["out"]
+                    out_data = best_model([g.to(device), lg.to(device)])
                     # out_data = net([g.to(device), lg.to(device)])["out"]
                     out_data = out_data.cpu().numpy().tolist()
                     if config.standard_scalar_and_pca:
