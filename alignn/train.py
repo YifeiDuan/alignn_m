@@ -352,6 +352,7 @@ def train_dgl_prop(
                 optimizer.step()
                 # optimizer.zero_grad() #never
                 running_loss += loss.item()
+            embed()
             mean_out = get_batch_errors(
                 train_result
             )
