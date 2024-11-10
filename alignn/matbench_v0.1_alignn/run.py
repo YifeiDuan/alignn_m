@@ -18,6 +18,9 @@ from sklearn.metrics import mean_absolute_error, roc_auc_score
 from matbench.bench import MatbenchBenchmark
 from matbench.constants import CLF_KEY
 
+import warnings
+warnings.filterwarnings('ignore')
+
 ##### Initalize MatbenchBenchmark object that configures prop tasks #####
 mb = MatbenchBenchmark(
     autoload=False,
