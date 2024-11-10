@@ -589,6 +589,8 @@ def train_dgl_prop(
                 ids = test_loader.dataset.ids  # [test_loader.dataset.indices]
                 for dat, id in zip(test_loader, ids):
                     g, lg, target = dat
+                    # FIXME: IndexError: too many indices for tensor of dimension 0
+                    embed()
                     out_data = best_model([g.to(device), lg.to(device)])["out"]
                     # out_data = net([g.to(device), lg.to(device)])["out"]
                     out_data = out_data.cpu().numpy().tolist()

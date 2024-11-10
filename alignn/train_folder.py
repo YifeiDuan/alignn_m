@@ -21,6 +21,9 @@ from jarvis.core.atoms import Atoms
 import random
 from ase.stress import voigt_6_to_full_3x3_stress
 
+import warnings
+warnings.filterwarnings('ignore')
+
 device = "cpu"
 if torch.cuda.is_available():
     device = torch.device("cuda")
