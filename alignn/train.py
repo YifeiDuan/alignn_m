@@ -278,8 +278,7 @@ def train_dgl_prop(
             # natoms_batch=False
             # print ('lendat',len(dat))
             for i in dat:
-                ### FIXME: i["target"] keyerror
-                if i["target"]:
+                if i["target_out"]:
                     for j, k in zip(i["target_out"], i["pred_out"]):
                         # if config.normalize_graph_level_loss and
                         # natoms_batch:
@@ -292,7 +291,7 @@ def train_dgl_prop(
 
                         target_out.append(j)
                         pred_out.append(k)
-            if "target" in i:
+            if "target_out" in i:
                 # if i["target_out"]:
                 target_out = np.array(target_out)
                 pred_out = np.array(pred_out)
@@ -352,7 +351,6 @@ def train_dgl_prop(
                 optimizer.step()
                 # optimizer.zero_grad() #never
                 running_loss += loss.item()
-            embed()
             mean_out = get_batch_errors(
                 train_result
             )
