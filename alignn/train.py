@@ -455,6 +455,7 @@ def train_dgl_prop(
 
         if rank == 0 or world_size == 1:
             test_loss = 0
+            # TODO: Check test set prediction
             test_result = []
             with torch.no_grad():
                 for dats, jid in zip(test_loader, test_loader.dataset.ids):
@@ -584,6 +585,7 @@ def train_dgl_prop(
                 "w",
             )
             f.write("id,target,prediction\n")
+            # FIXME: csv not consistent with json
             targets = []
             predictions = []
             with torch.no_grad():
