@@ -351,7 +351,7 @@ def train_dgl_prop(
                 optimizer.step()
                 # optimizer.zero_grad() #never
                 running_loss += loss.item()
-            mean_out = get_batch_errors(
+            train_mean_loss = get_batch_errors(
                 train_result
             )
             # dumpjson(filename="Train_results.json", data=train_result)
@@ -359,7 +359,7 @@ def train_dgl_prop(
             train_final_time = time.time()
             train_ep_time = train_final_time - train_init_time
             # if rank == 0: # or world_size == 1:
-            history_train.append([mean_out])
+            history_train.append([train_mean_loss])
             dumpjson(
                 filename=os.path.join(config.output_dir, "history_train.json"),
                 data=history_train,
@@ -369,7 +369,7 @@ def train_dgl_prop(
             # for dats in val_loader:
             for dats, jid in zip(val_loader, val_loader.dataset.ids):
                 info = {}
-                info["id"] = jid
+                # info["id"] = jid
                 optimizer.zero_grad()
                 # result = net([dats[0].to(device), dats[1].to(device)])
                 if (config.model.alignn_layers) > 0:
@@ -392,7 +392,7 @@ def train_dgl_prop(
                 val_result.append(info)
                 val_loss += loss.item()
 
-            mean_out = get_batch_errors(
+            val_mean_loss = get_batch_errors(
                 val_result
             )
             current_model_name = "current_model.pt"
@@ -423,7 +423,7 @@ def train_dgl_prop(
                     data=val_result,
                 )
                 best_model = net
-            history_val.append([mean_out])
+            history_val.append([val_mean_loss])
             dumpjson(
                 filename=os.path.join(config.output_dir, "history_val.json"),
                 data=history_val,
@@ -438,7 +438,7 @@ def train_dgl_prop(
                     "total",
                     running_loss,
                     "out",
-                    mean_out,
+                    train_mean_loss,
                     "time",
                     train_ep_time,
                 )
@@ -449,45 +449,46 @@ def train_dgl_prop(
                     "total",
                     val_loss,
                     "out",
-                    mean_out,
+                    val_mean_loss,
                     saving_msg,
                 )
 
         if rank == 0 or world_size == 1:
             test_loss = 0
             test_result = []
-            for dats, jid in zip(test_loader, test_loader.dataset.ids):
-                # for dats in test_loader:
-                info = {}
-                info["id"] = jid
-                optimizer.zero_grad()
-                # print('dats[0]',dats[0])
-                # print('test_loader',test_loader)
-                # print('test_loader.dataset.ids',test_loader.dataset.ids)
-                # result = net([dats[0].to(device), dats[1].to(device)])
-                if (config.model.alignn_layers) > 0:
-                    result = net([dats[0].to(device), dats[1].to(device)])
-                else:
-                    result = net(dats[0].to(device))
-                loss = 0
-                if (
-                    config.model.output_features is not None
-                    and not classification
-                ):
-                    # print('result',result)
-                    # print('dats[2]',dats[2])
-                    loss = criterion(
-                        result, dats[-1].to(device)
-                    )
-                    info["target_out"] = dats[-1].cpu().numpy().tolist()
-                    info["pred_out"] = (
-                        result.cpu().detach().numpy().tolist()
-                    )
+            with torch.no_grad():
+                for dats, jid in zip(test_loader, test_loader.dataset.ids):
+                    # for dats in test_loader:
+                    info = {}
+                    info["id"] = jid
 
-                test_result.append(info)
-                if not classification:
-                    test_loss += loss.item()
-            print("TestLoss", e, test_loss)
+                    # print('dats[0]',dats[0])
+                    # print('test_loader',test_loader)
+                    # print('test_loader.dataset.ids',test_loader.dataset.ids)
+                    # result = net([dats[0].to(device), dats[1].to(device)])
+                    if (config.model.alignn_layers) > 0:
+                        result = best_model([dats[0].to(device), dats[1].to(device)])
+                    else:
+                        result = best_model(dats[0].to(device))
+                    loss = 0
+                    if (
+                        config.model.output_features is not None
+                        and not classification
+                    ):
+                        # print('result',result)
+                        # print('dats[2]',dats[2])
+                        loss = criterion(
+                            result.view(-1), dats[-1].to(device)
+                        )
+                        info["target_out"] = dats[-1].cpu().numpy().tolist()
+                        info["pred_out"] = (
+                            result.cpu().detach().numpy().tolist()
+                        )
+
+                    test_result.append(info)
+                    if not classification:
+                        test_loss += loss.item()
+                print("Test MAE", test_loss/len(test_result))
             dumpjson(
                 filename=os.path.join(config.output_dir, "Test_results.json"),
                 data=test_result,
@@ -608,10 +609,10 @@ def train_dgl_prop(
                     predictions.append(out_data)
             f.close()
 
-            print(
-                "Test MAE:",
-                mean_absolute_error(np.array(targets), np.array(predictions)),
-            )
+            # print(
+            #     "Test MAE:",
+            #     mean_absolute_error(np.array(targets), np.array(predictions)),
+            # )
             best_model.eval()
             # net.eval()
             f = open(
