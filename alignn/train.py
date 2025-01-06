@@ -213,7 +213,7 @@ def train_dgl_prop(
         config.model.classification = True
     _model = {
         "alignn_atomwise": ALIGNNAtomWise,
-        "alignn": ALIGNN    # Added this b.c. matbench run.py configs alignn instead of align_atomwise
+        "alignn": ALIGNN    # TODO: Added this b.c. matbench run.py configs alignn instead of align_atomwise
     }
     if config.random_seed is not None:  # run.py configs random_seed = 123
         random.seed(config.random_seed)
