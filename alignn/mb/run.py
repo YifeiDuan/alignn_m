@@ -25,9 +25,9 @@ warnings.filterwarnings('ignore')
 mb = MatbenchBenchmark(
     autoload=False,
     subset=[
-        # "matbench_jdft2d",
-        "matbench_dielectric",
-        "matbench_phonons",
+        "matbench_jdft2d",
+        # "matbench_dielectric",
+        # "matbench_phonons",
         # "matbench_perovskites",
         # "matbench_log_gvrh",
         # "matbench_log_kvrh",
