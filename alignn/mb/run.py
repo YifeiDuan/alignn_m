@@ -237,6 +237,8 @@ def train_tasks(
                 n_val = len(val_df)
                 n_test = len(test_df)
                 config = loadjson(config_template)
+                # FIXME: config["filename"]
+                config["filename"] = fold_name
                 config["n_train"] = n_train
                 config["n_val"] = n_val
                 config["n_test"] = n_test
@@ -293,7 +295,7 @@ def train_tasks(
                 pred_vals = df.prediction.values
                 mae = mean_absolute_error(target_vals, pred_vals)
                 maes.append(mae)
-                # FIXME: seems to always be jdft2d
+                # FIXME: len(predictions) always 128 <-- problem with prediction_results_test_set.csv <-- problem with get_train_val_loaders
                 task.record(fold, pred_vals, params=config)
                 print(
                     "Dataset_name, Fold, MAE=",
