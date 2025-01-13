@@ -131,6 +131,7 @@ def get_train_val_loaders(
     val_ratio=0.1,
     test_ratio=0.1,
     batch_size: int = 5,
+    test_batch_size: int = 1,
     standardize: bool = False,
     line_graph: bool = True,
     split_seed: int = 123,
@@ -473,7 +474,7 @@ def get_train_val_loaders(
             GraphDataLoader(
                 # DataLoader(
                 test_data,
-                batch_size=1,
+                batch_size=test_batch_size,
                 shuffle=False,
                 collate_fn=collate_fn,
                 drop_last=False,

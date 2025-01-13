@@ -585,7 +585,7 @@ def train_dgl_prop(
                 "w",
             )
             f.write("id,target,prediction\n")
-            # FIXME: csv not consistent with json
+            # FIXME: csv not consistent with json <-- predictions are much more reliable when batched in data loaders. Why?
             targets = []
             predictions = []
             with torch.no_grad():
