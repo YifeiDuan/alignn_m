@@ -245,8 +245,8 @@ def train_tasks(
                 config["keep_data_order"] = True
                 config["batch_size"] = 32
                 # TODO: after debugging, change epochs back to 500
-                # config["epochs"] = 500
-                config["epochs"] = 10
+                config["epochs"] = 500
+                # config["epochs"] = 10
                 fname = "config_fold_" + str(ii) + ".json"
                 dumpjson(data=config, filename=fname)
                 f.close()
