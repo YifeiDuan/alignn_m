@@ -357,28 +357,28 @@ if __name__ == "__main__":
     ##### Run the training loop for all tasks in mb #####
     train_tasks(mb=mb, config_template=config_template, file_format="poscar")
 
-    run_dir = "."
-    # run_dir = "/wrk/knc6/matbench/benchmarks/matbench_v0.1_alignn"
+    # run_dir = "."
+    # # run_dir = "/wrk/knc6/matbench/benchmarks/matbench_v0.1_alignn"
 
-    cwd = os.getcwd()
+    # cwd = os.getcwd()
 
-    os.chdir(run_dir)
+    # os.chdir(run_dir)
 
-    results = defaultdict()
-    for task in mb.tasks:
-        task.load()
-        task_name = task.dataset_name
-        regr = True
-        if "is" in task_name:
-            regr = False
-        results = compile_results(task_name, regression=regr)
-        for ii, fold in enumerate(task.folds):
-            train_df = task.get_train_and_val_data(fold, as_type="df")
-            test_df = task.get_test_data(
-                fold, include_target=True, as_type="df"
-            )
-            pred_vals = results[fold]
-            task.record(fold, pred_vals, params=config)
-    os.chdir(cwd)
-    mb.add_metadata({"algorithm": "ALIGNN"})
-    mb.to_file("results.json.gz")
+    # results = defaultdict()
+    # for task in mb.tasks:
+    #     task.load()
+    #     task_name = task.dataset_name
+    #     regr = True
+    #     if "is" in task_name:
+    #         regr = False
+    #     results = compile_results(task_name, regression=regr)
+    #     for ii, fold in enumerate(task.folds):
+    #         train_df = task.get_train_and_val_data(fold, as_type="df")
+    #         test_df = task.get_test_data(
+    #             fold, include_target=True, as_type="df"
+    #         )
+    #         pred_vals = results[fold]
+    #         task.record(fold, pred_vals, params=config)
+    # os.chdir(cwd)
+    # mb.add_metadata({"algorithm": "ALIGNN"})
+    # mb.to_file("results.json.gz")
