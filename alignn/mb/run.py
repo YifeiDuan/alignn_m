@@ -288,26 +288,26 @@ def train_tasks(
                 )
                 print(cmd)
                 os.system(cmd)      # executes the cmd line
-                test_csv = outdir_name + "/prediction_results_test_set.csv"
-                df = pd.read_csv(test_csv)
-                target_vals = df.target.values
-                # id_vals = df.id.values
-                pred_vals = df.prediction.values
-                mae = mean_absolute_error(target_vals, pred_vals)
-                maes.append(mae)
-                # FIXME: len(predictions) always 128 <-- problem with prediction_results_test_set.csv <-- problem with get_train_val_loaders
-                task.record(fold, pred_vals, params=config)
-                print(
-                    "Dataset_name, Fold, MAE=",
-                    task.dataset_name,
-                    fold,
-                    mean_absolute_error(target_vals, pred_vals),
-                )
-            maes = np.array(maes)
-            print(maes, np.mean(maes), np.std(maes))
-            print()
-            print()
-            print()
+            #     test_csv = outdir_name + "/prediction_results_test_set.csv"
+            #     df = pd.read_csv(test_csv)
+            #     target_vals = df.target.values
+            #     # id_vals = df.id.values
+            #     pred_vals = df.prediction.values
+            #     mae = mean_absolute_error(target_vals, pred_vals)
+            #     maes.append(mae)
+            #     # FIXME: len(predictions) always 128 <-- problem with prediction_results_test_set.csv <-- problem with get_train_val_loaders
+            #     task.record(fold, pred_vals, params=config)
+            #     print(
+            #         "Dataset_name, Fold, MAE=",
+            #         task.dataset_name,
+            #         fold,
+            #         mean_absolute_error(target_vals, pred_vals),
+            #     )
+            # maes = np.array(maes)
+            # print(maes, np.mean(maes), np.std(maes))
+            # print()
+            # print()
+            # print()
 
 
 def compile_results(key="matbench_phonons", regression=True):
