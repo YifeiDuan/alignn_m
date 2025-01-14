@@ -39,7 +39,7 @@ setuptools.setup(
     scripts=[
         "alignn/pretrained.py",
         "alignn/train_alignn.py",
-        "alignn/run_alignn_ff.py",
+        "alignn/run_alignn_ff.py"
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",

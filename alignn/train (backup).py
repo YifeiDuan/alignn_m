@@ -26,7 +26,6 @@ import os
 import warnings
 import time
 from sklearn.metrics import roc_auc_score
-import pandas as pd
 
 from IPython import embed
 
@@ -320,7 +319,7 @@ def train_dgl_prop(
             running_loss = 0
             train_result = []
             # for dats in train_loader:
-            for dats in train_loader:
+            for dats, jid in zip(train_loader, train_loader.dataset.ids):
             # A batch in the data loader
                 info = {}
                 # info["id"] = jid
@@ -368,7 +367,7 @@ def train_dgl_prop(
             val_loss = 0
             val_result = []
             # for dats in val_loader:
-            for dats in val_loader:
+            for dats, jid in zip(val_loader, val_loader.dataset.ids):
                 info = {}
                 # info["id"] = jid
                 optimizer.zero_grad()
@@ -455,12 +454,14 @@ def train_dgl_prop(
                 )
 
         if rank == 0 or world_size == 1:
+            test_loss = 0
             # TODO: Check test set prediction
             test_result = []
             with torch.no_grad():
-                for dats in test_loader:
+                for dats, jid in zip(test_loader, test_loader.dataset.ids):
                     # for dats in test_loader:
                     info = {}
+                    info["id"] = jid
 
                     # print('dats[0]',dats[0])
                     # print('test_loader',test_loader)
@@ -486,6 +487,9 @@ def train_dgl_prop(
                         )
 
                     test_result.append(info)
+                    if not classification:
+                        test_loss += loss.item()
+                print("Test MAE", test_loss/len(test_result))
             dumpjson(
                 filename=os.path.join(config.output_dir, "Test_results.json"),
                 data=test_result,
@@ -574,13 +578,22 @@ def train_dgl_prop(
         ):
             best_model.eval()
             # net.eval()
+            f = open(
+                os.path.join(
+                    config.output_dir, "prediction_results_test_set.csv"
+                ),
+                "w",
+            )
+            f.write("id,target,prediction\n")
             # FIXME: csv not consistent with json <-- predictions are much more reliable when batched in data loaders. Why?
-            test_targets = []
-            test_predictions = []
+            targets = []
+            predictions = []
             with torch.no_grad():
-                for dat in test_loader:
+                ids = test_loader.dataset.ids  # [test_loader.dataset.indices]
+                for dat, id in zip(test_loader, ids):
                     g, lg, target = dat
-                    out_data = net([g.to(device), lg.to(device)])
+                    # out_data from ALIGNN is just a scalar tensor, no index
+                    out_data = best_model([g.to(device), lg.to(device)])
                     # out_data = net([g.to(device), lg.to(device)])["out"]
                     out_data = out_data.cpu().numpy().tolist()
                     if config.standard_scalar_and_pca:
@@ -591,49 +604,33 @@ def train_dgl_prop(
                             np.array(out_data).reshape(-1, 1)
                         )[0][0]
                     target = target.cpu().numpy().flatten().tolist()
-                    # if len(target) == 1:
-                    #    target = target[0]
-                    # if len(out_data) == 1:
-                    #    out_data = out_data[0]
-                    for ii, jj in zip(target, out_data):
-                        test_targets.append(ii)
-                        test_predictions.append(jj)
-                    
-                test_MAE = criterion(torch.FloatTensor(test_predictions),
-                                    torch.FloatTensor(test_targets))
-                print("Test MAE", test_MAE.item())
-
-                test_eval = {"test_MAE": test_MAE.item(),
-                             "id": test_loader.dataset.ids,
-                             "target": test_targets,
-                             "predicion": test_predictions}
-
-                df_test = pd.DataFrame({"id": test_loader.dataset.ids,
-                                        "target": test_targets,
-                                        "predicion": test_predictions})
-                f = open(
-                        os.path.join(
-                            config.output_dir, "Eval_test_set.json"
-                        ),
-                        "w",
-                    )
-                json.dump(test_eval, f, indent = 4)
-                df_test.to_csv(f"{config.output_dir}/Eval_test_set.csv")
-                
+                    if len(target) == 1:
+                        target = target[0]
+                    f.write("%s, %6f, %6f\n" % (id, target, out_data))
+                    targets.append(target)
+                    predictions.append(out_data)
+            f.close()
 
             # print(
             #     "Test MAE:",
             #     mean_absolute_error(np.array(targets), np.array(predictions)),
             # )
-           
             best_model.eval()
             # net.eval()
-            train_targets = []
-            train_predictions = []
+            f = open(
+                os.path.join(
+                    config.output_dir, "prediction_results_train_set.csv"
+                ),
+                "w",
+            )
+            f.write("target,prediction\n")
+            targets = []
+            predictions = []
             with torch.no_grad():
-                for dat in train_loader:
+                ids = train_loader.dataset.ids  # [test_loader.dataset.indices]
+                for dat, id in zip(train_loader, ids):
                     g, lg, target = dat
-                    out_data = net([g.to(device), lg.to(device)])
+                    out_data = best_model([g.to(device), lg.to(device)])
                     # out_data = net([g.to(device), lg.to(device)])["out"]
                     out_data = out_data.cpu().numpy().tolist()
                     if config.standard_scalar_and_pca:
@@ -649,27 +646,10 @@ def train_dgl_prop(
                     # if len(out_data) == 1:
                     #    out_data = out_data[0]
                     for ii, jj in zip(target, out_data):
-                        train_targets.append(ii)
-                        train_predictions.append(jj)
-                    
-                train_MAE = criterion(torch.FloatTensor(train_predictions),
-                                    torch.FloatTensor(train_targets))
-                print("train MAE", train_MAE.item())
-
-                train_eval = {"train_MAE": train_MAE.item(),
-                             "target": train_targets,
-                             "predicion": train_predictions}
-
-                df_train = pd.DataFrame({"target": train_targets,
-                                        "predicion": train_predictions})
-                f = open(
-                        os.path.join(
-                            config.output_dir, "Eval_train_set.json"
-                        ),
-                        "w",
-                    )
-                json.dump(train_eval, f, indent = 4)
-                df_train.to_csv(f"{config.output_dir}/Eval_train_set.csv")
+                        f.write("%6f, %6f\n" % (ii, jj))
+                        targets.append(ii)
+                        predictions.append(jj)
+            f.close()
         if config.use_lmdb:
             print("Closing LMDB.")
             train_loader.dataset.close()
