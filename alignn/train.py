@@ -454,6 +454,13 @@ def train_dgl_prop(
                     saving_msg,
                 )
 
+        # Load saved best model, instead of directly using the current one in training
+        best_model = ALIGNN(config.model)
+        best_model_name = "best_model.pt"
+        save_path = os.path.join(config.output_dir, best_model_name)
+        best_model.load_state_dict(torch.load(save_path, weights_only=True))
+        best_model = best_model.to(device)
+
         if rank == 0 or world_size == 1:
             # TODO: Check test set prediction
             test_result = []
