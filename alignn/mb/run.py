@@ -26,10 +26,10 @@ mb = MatbenchBenchmark(
     autoload=False,
     subset=[
         # "matbench_jdft2d",
-        "matbench_dielectric",
-        "matbench_phonons",
+        # "matbench_dielectric",
+        # "matbench_phonons",
         # "matbench_perovskites",
-        # "matbench_log_gvrh",
+        "matbench_log_gvrh",
         # "matbench_log_kvrh",
         # "matbench_mp_e_form",
         # "matbench_mp_gap",
