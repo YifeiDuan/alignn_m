@@ -351,3 +351,158 @@ class ALIGNN(nn.Module):
             # out = torch.round(torch.sigmoid(out))
             out = self.softmax(out)
         return torch.squeeze(out)
+
+
+
+
+
+act_list_x = []
+act_list_y = []
+act_list_z = []
+
+class ALIGNN_infer(nn.Module):
+    """Atomistic Line graph network.
+
+    Chain alternating gated graph convolution updates on crystal graph
+    and atomistic line graph.
+    """
+
+    def __init__(self, config: ALIGNNConfig = ALIGNNConfig(name="alignn")):
+        """Initialize class with number of input features, conv layers."""
+        super().__init__()
+        # print(config)
+        self.classification = config.classification
+
+        self.atom_embedding = MLPLayer(
+            config.atom_input_features, config.hidden_features
+        )
+
+        self.edge_embedding = nn.Sequential(
+            RBFExpansion(
+                vmin=0,
+                vmax=8.0,
+                bins=config.edge_input_features,
+            ),
+            MLPLayer(config.edge_input_features, config.embedding_features),
+            MLPLayer(config.embedding_features, config.hidden_features),
+        )
+        self.angle_embedding = nn.Sequential(
+            RBFExpansion(
+                vmin=-1,
+                vmax=1.0,
+                bins=config.triplet_input_features,
+            ),
+            MLPLayer(config.triplet_input_features, config.embedding_features),
+            MLPLayer(config.embedding_features, config.hidden_features),
+        )
+
+        self.alignn_layers = nn.ModuleList(
+            [
+                ALIGNNConv(
+                    config.hidden_features,
+                    config.hidden_features,
+                )
+                for idx in range(config.alignn_layers)
+            ]
+        )
+        self.gcn_layers = nn.ModuleList(
+            [
+                EdgeGatedGraphConv(
+                    config.hidden_features, config.hidden_features
+                )
+                for idx in range(config.gcn_layers)
+            ]
+        )
+
+        self.readout = AvgPooling()
+
+        if self.classification:
+            self.fc = nn.Linear(config.hidden_features, 2)
+            self.softmax = nn.LogSoftmax(dim=1)
+        else:
+            self.fc = nn.Linear(config.hidden_features, config.output_features)
+        self.link = None
+        self.link_name = config.link
+        if config.link == "identity":
+            self.link = lambda x: x
+        elif config.link == "log":
+            self.link = torch.exp
+            avg_gap = 0.7  # magic number -- average bandgap in dft_3d
+            self.fc.bias.data = torch.tensor(
+                np.log(avg_gap), dtype=torch.float
+            )
+        elif config.link == "logit":
+            self.link = torch.sigmoid
+
+    def forward(
+        self, g: Union[Tuple[dgl.DGLGraph, dgl.DGLGraph], dgl.DGLGraph]
+    ):
+        """ALIGNN : start with `atom_features`.
+
+        x: atom features (g.ndata)
+        y: bond features (g.edata and lg.ndata)
+        z: angle features (lg.edata)
+        """
+        #print('ALIGNN')
+
+        if len(self.alignn_layers) > 0:
+            g, lg = g
+            lg = lg.local_var()
+
+            # angle features (fixed)
+            z = self.angle_embedding(lg.edata.pop("h"))
+            change_z = torch.mean(z, dim=0)
+            change_z = torch.reshape(change_z, (1, change_z.shape[0]))
+            act_list_z.append(change_z)
+
+        g = g.local_var()
+
+        # initial node features: atom feature network...
+        x = g.ndata.pop("atom_features")
+        x = self.atom_embedding(x)
+        change_x = torch.mean(x, dim=0)
+        change_x = torch.reshape(change_x, (1, change_x.shape[0]))
+        act_list_x.append(change_x)
+
+        # initial bond features
+        bondlength = torch.norm(g.edata.pop("r"), dim=1)
+        y = self.edge_embedding(bondlength)
+        change_y = torch.mean(y, dim=0)
+        change_y = torch.reshape(change_y, (1, change_y.shape[0]))
+        act_list_y.append(change_y)
+
+        # ALIGNN updates: update node, edge, triplet features
+        for alignn_layer in self.alignn_layers:
+            x, y, z = alignn_layer(g, lg, x, y, z)
+            change_x = torch.mean(x, dim=0)
+            change_y = torch.mean(y, dim=0)
+            change_z = torch.mean(z, dim=0)
+            change_x = torch.reshape(change_x, (1, change_x.shape[0]))
+            change_y = torch.reshape(change_y, (1, change_y.shape[0]))
+            change_z = torch.reshape(change_z, (1, change_z.shape[0]))
+            act_list_x.append(change_x)
+            act_list_y.append(change_y)
+            act_list_z.append(change_z)
+
+        # gated GCN updates: update node, edge features
+        for gcn_layer in self.gcn_layers:
+            x, y = gcn_layer(g, x, y)
+            change_x = torch.mean(x, dim=0)
+            change_y = torch.mean(y, dim=0)
+            change_x = torch.reshape(change_x, (1, change_x.shape[0]))
+            change_y = torch.reshape(change_y, (1, change_y.shape[0]))
+            act_list_x.append(change_x)
+            act_list_y.append(change_y)
+
+        # norm-activation-pool-classify
+        h = self.readout(g, x)
+
+        out = self.fc(h)
+
+        if self.link:
+            out = self.link(out)
+
+        if self.classification:
+            # out = torch.round(torch.sigmoid(out))
+            out = self.softmax(out)
+        return torch.squeeze(out), act_list_x, act_list_y, act_list_z

@@ -5,7 +5,7 @@ import requests
 import os
 import zipfile
 from tqdm import tqdm
-from alignn.models.alignn import ALIGNN, ALIGNNConfig
+from alignn.models.alignn import ALIGNN_infer, ALIGNNConfig
 import tempfile
 import torch
 import sys
@@ -150,7 +150,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--file_path",
-    default="alignn/examples/sample_data/POSCAR-JVASP-10.vasp",
+    default="alignn/matbench_jdft2d_exfoliation_en_fold_0/mb-jdft2d-001",
     help="Path to file.",
 )
 
@@ -211,7 +211,8 @@ def get_prediction(
     fold=0,
     atoms=None,
     cutoff=8,
-    output_path=None
+    output_path=None,
+    file_path=None
 ):
     """Load Model with config and saved .pt state_dict"""
     folder_path = prop_name + f"_{fold}"
@@ -221,15 +222,12 @@ def get_prediction(
     with open(config_path, 'r') as file:
         config = json.load(file)        # Load config.json
 
-    model = ALIGNN(config.model)   # Config the ALIGNN model
+    model = ALIGNN_infer(config.model)   
+    # Config the ALIGNN model, using the modified class ALIGNN_infer to have atom, bond, angle features returned
     model.load_state_dict(torch.load(model_path, weights_only=True))    # Load state dict for the saved ALIGNN model
     model = model.to(device)
     model.eval()
-    
-    #for name, layer in model.named_modules():
-    #    layer.register_forward_hook(get_activation(name))
 
-    # print("Loading completed.")
     g, lg = Graph.atom_dgl_multigraph(atoms, cutoff=float(cutoff))
     #print(g)
     #print(lg)
@@ -238,11 +236,10 @@ def get_prediction(
     )
 
 
-    substring = args.file_path.split('/')
-    for i in range(len(substring)):
-        if (substring[i].find('vasp') != -1):
-            struct_file = substring[i].split('.vasp')[0]
-
+    substring = file_path.split('/')[-1]
+    struct_file = substring[i].split('.vasp')[0]    
+    # In case there is ".vasp" in the file name. In the matbench cases, there shouldn't be any.
+    
 
     for i in range(len(act_list_x)):
         act_list_x[i] = act_list_x[i].detach().cpu().numpy()
@@ -267,22 +264,6 @@ def get_prediction(
 
     out_data = out_data.detach().cpu().numpy().flatten().tolist()
 
-    
-    '''
-    act_list = []
-    for key in activation:
-        if len(key) != 0:
-            act1 = activation[key].cpu().detach().numpy()
-            #print(act1.shape)
-            if act1.shape[1] == 256 :
-                act2 = np.mean(act1, axis=0)
-                act2 = np.reshape(act2, (1, act2.shape[0]))
-                act_list.append(act2)
-    ''' 
-
-    #np_act = np.concatenate(act_list, axis=0)            
-    #df_act = pd.DataFrame(np_act)
-    #df_act.to_csv('../ElemNet_vishu/structgnn/expt1_alignn/jarvis/add/{}.csv'.format(struct_file), index=False)
 
     return out_data
 
@@ -305,8 +286,9 @@ if __name__ == "__main__":
     else:
         raise NotImplementedError("File format not implemented", file_format)
 
+    # atoms is a single compound!
     out_data = get_prediction(
-        model_name=model_name, cutoff=float(cutoff), atoms=atoms, output_path= output_path
+        model_name=model_name, cutoff=float(cutoff), atoms=atoms, output_path= output_path, file_path=file_path
     )
 
     print("Predicted value:", model_name, file_path, out_data)
