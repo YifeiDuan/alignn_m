@@ -135,13 +135,21 @@ all_models = {
 parser = argparse.ArgumentParser(
     description="Atomistic Line Graph Neural Network Pretrained Models"
 )
+# parser.add_argument(
+#     "--model_name",
+#     default="jv_formation_energy_peratom_alignn",
+#     help="Choose a model from these "
+#     + str(len(list(all_models.keys())))
+#     + " models:"
+#     + ", ".join(list(all_models.keys())),
+# )
+
 parser.add_argument(
-    "--model_name",
-    default="jv_formation_energy_peratom_alignn",
-    help="Choose a model from these "
-    + str(len(list(all_models.keys())))
-    + " models:"
-    + ", ".join(list(all_models.keys())),
+    "--prop_name", default="matbench_jdft2d_exfoliation_en", help="use a matbench dataset"
+)
+
+parser.add_argument(
+    "--fold", default=0, help="fold 0-4"
 )
 
 parser.add_argument(
@@ -274,7 +282,8 @@ def get_prediction(
 
 if __name__ == "__main__":
     args = parser.parse_args(sys.argv[1:])
-    model_name = args.model_name
+    prop_name = args.prop_name
+    fold = args.fold
     file_path = args.file_path
     file_format = args.file_format
     output_path = args.output_path
@@ -292,8 +301,8 @@ if __name__ == "__main__":
 
     # atoms is a single compound!
     out_data = get_prediction(
-        model_name=model_name, cutoff=float(cutoff), atoms=atoms, output_path= output_path, file_path=file_path
+        prop_name=prop_name, fold=fold, cutoff=float(cutoff), atoms=atoms, output_path= output_path, file_path=file_path
     )
 
-    print("Predicted value:", model_name, file_path, out_data)
+    print("Predicted value:", prop_name, file_path, out_data)
 
