@@ -255,7 +255,7 @@ def get_prediction(
     struct_file = substring.split('.vasp')[0]    
     # In case there is ".vasp" in the file name. In the matbench cases, there shouldn't be any.
     
-    embed()
+    # embed()
     for i in range(len(act_list_x)):
         act_list_x[i] = act_list_x[i].detach().cpu().numpy()
 
