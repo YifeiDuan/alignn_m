@@ -158,7 +158,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--file_path",
-    default="alignn/matbench_jdft2d_exfoliation_en_fold_0/mb-jdft2d-001",
+    default="matbench_jdft2d_exfoliation_en_fold_0/mb-jdft2d-001",
     help="Path to file.",
 )
 
@@ -223,7 +223,7 @@ def get_prediction(
     file_path=None
 ):
     """Load Model with config and saved .pt state_dict"""
-    folder_path = prop_name + f"_{fold}"
+    folder_path = prop_name + f"_outdir_{fold}"
     config_path = os.path.join(folder_path, "config.json")
     model_path = os.path.join(folder_path, "best_model.pt")
 
