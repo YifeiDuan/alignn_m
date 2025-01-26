@@ -356,10 +356,6 @@ class ALIGNN(nn.Module):
 
 
 
-act_list_x = []
-act_list_y = []
-act_list_z = []
-
 class ALIGNN_infer(nn.Module):
     """Atomistic Line graph network.
 
@@ -372,6 +368,10 @@ class ALIGNN_infer(nn.Module):
         super().__init__()
         # print(config)
         self.classification = config.classification
+
+        self.act_list_x = []
+        self.act_list_y = []
+        self.act_list_z = []
 
         self.atom_embedding = MLPLayer(
             config.atom_input_features, config.hidden_features
@@ -453,7 +453,7 @@ class ALIGNN_infer(nn.Module):
             z = self.angle_embedding(lg.edata.pop("h"))
             change_z = torch.mean(z, dim=0)
             change_z = torch.reshape(change_z, (1, change_z.shape[0]))
-            act_list_z.append(change_z)
+            self.act_list_z.append(change_z)
 
         g = g.local_var()
 
@@ -462,14 +462,14 @@ class ALIGNN_infer(nn.Module):
         x = self.atom_embedding(x)
         change_x = torch.mean(x, dim=0)
         change_x = torch.reshape(change_x, (1, change_x.shape[0]))
-        act_list_x.append(change_x)
+        self.act_list_x.append(change_x)
 
         # initial bond features
         bondlength = torch.norm(g.edata.pop("r"), dim=1)
         y = self.edge_embedding(bondlength)
         change_y = torch.mean(y, dim=0)
         change_y = torch.reshape(change_y, (1, change_y.shape[0]))
-        act_list_y.append(change_y)
+        self.act_list_y.append(change_y)
 
         # ALIGNN updates: update node, edge, triplet features
         for alignn_layer in self.alignn_layers:
@@ -480,9 +480,9 @@ class ALIGNN_infer(nn.Module):
             change_x = torch.reshape(change_x, (1, change_x.shape[0]))
             change_y = torch.reshape(change_y, (1, change_y.shape[0]))
             change_z = torch.reshape(change_z, (1, change_z.shape[0]))
-            act_list_x.append(change_x)
-            act_list_y.append(change_y)
-            act_list_z.append(change_z)
+            self.act_list_x.append(change_x)
+            self.act_list_y.append(change_y)
+            self.act_list_z.append(change_z)
 
         # gated GCN updates: update node, edge features
         for gcn_layer in self.gcn_layers:
@@ -491,8 +491,8 @@ class ALIGNN_infer(nn.Module):
             change_y = torch.mean(y, dim=0)
             change_x = torch.reshape(change_x, (1, change_x.shape[0]))
             change_y = torch.reshape(change_y, (1, change_y.shape[0]))
-            act_list_x.append(change_x)
-            act_list_y.append(change_y)
+            self.act_list_x.append(change_x)
+            self.act_list_y.append(change_y)
 
         # norm-activation-pool-classify
         h = self.readout(g, x)
@@ -505,4 +505,4 @@ class ALIGNN_infer(nn.Module):
         if self.classification:
             # out = torch.round(torch.sigmoid(out))
             out = self.softmax(out)
-        return torch.squeeze(out), act_list_x, act_list_y, act_list_z
+        return torch.squeeze(out), self.act_list_x, self.act_list_y, self.act_list_z
