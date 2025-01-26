@@ -251,7 +251,7 @@ def get_prediction(
 
 
     substring = file_path.split('/')[-1]
-    struct_file = substring[i].split('.vasp')[0]    
+    struct_file = substring.split('.vasp')[0]    
     # In case there is ".vasp" in the file name. In the matbench cases, there shouldn't be any.
     
 
