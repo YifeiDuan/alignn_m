@@ -17,7 +17,7 @@ import argparse
 from jarvis.core.atoms import Atoms
 from jarvis.core.graphs import Graph
 
-import json
+from alignn.config import TrainingConfig
 
 # Name of the model, figshare link, number of outputs
 all_models = {
@@ -227,8 +227,14 @@ def get_prediction(
     config_path = os.path.join(folder_path, "config.json")
     model_path = os.path.join(folder_path, "best_model.pt")
 
-    with open(config_path, 'r') as file:
-        config = json.load(file)        # Load config.json
+    config_dict = loadjson(config_path)       # Load config.json
+    
+    config = TrainingConfig(**config_dict)
+    if type(config) is dict:
+        try:
+            config = TrainingConfig(**config)
+        except Exception as exp:
+            print("Check", exp)
 
     model = ALIGNN_infer(config.model)   
     # Config the ALIGNN model, using the modified class ALIGNN_infer to have atom, bond, angle features returned
