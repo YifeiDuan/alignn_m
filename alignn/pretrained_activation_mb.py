@@ -244,6 +244,10 @@ def get_prediction(
     for i in range(len(act_list_x)):
         act_list_x[i] = act_list_x[i].detach().cpu().numpy()
 
+    
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
     np_act_x = np.concatenate(act_list_x, axis=0)            
     df_act_x = pd.DataFrame(np_act_x)
     df_act_x.to_csv('{}/{}_x.csv'.format(output_path, struct_file), index=False)    
