@@ -29,9 +29,11 @@ import logging
 warnings.filterwarnings("ignore", category=UserWarning)
 parser = argparse.ArgumentParser(description='get embeddings on dataset')
 # parser.add_argument('--data_path', help='path to the dataset',default=None, type=str, required=False)
+parser.add_argument('--database', help='the source database of the property dataset', default="matbench", type=str, required=False)
 parser.add_argument('--start', default=0, type=int,required=False)
 # parser.add_argument('--input', help='input attributes set', default=None, type=str, required=False)
 parser.add_argument('--end', type=int, required=False)
+parser.add_argument('--id_len', default=3, type=int,required=True)
 parser.add_argument('--output_dir', help='path to the save output embedding', default="./data/text", type=str, required=False)
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'],default='raw', type=str, required=False)
 parser.add_argument('--skip_sentence', help='skip the ith sentence or a specific topic', default="none", required=False)
@@ -188,7 +190,7 @@ def get_text(atoms, text):
         return get_crystal_string_t(atoms)
 
 
-def main_jarvis(args):
+def main_jarvis(args):  # The function to process jarvis datasets
     dat = data('dft_3d')
     text_dic = defaultdict(list)
     err_ct = 0
@@ -208,21 +210,23 @@ def main_jarvis(args):
     df_text.to_csv(output_file)
     logging.info(f"Saved output text to {output_file}")
 
-def main_mb(args):  # The function to process 
-    dat = data('dft_3d')
+def main_mb(args):  # The function to process matbench datasets
+    # dat = data('dft_3d')
     text_dic = defaultdict(list)
     err_ct = 0
-    end = len(dat)
-    if args.end:
-        end = min(args.end, len(dat))
-    for entry in tqdm(dat[args.start:end], desc="Processing data"):
+    folder_path = args.prop_name + f"_fold_{args.fold}"     # folder that contains id_prop.csv and dataset-specific poscar files
+    for idx in tqdm(range(args.start+1, args.end+1), desc="Processing data"):
+        compound_identifier = "mb-" + args.prop_name.split("_")[1] + f"-{idx.zfill(args.id_len)}"
+        # e.g. mb-jdft2d-001
+        file_path = os.path.join(folder_path, compound_identifier)
+        atoms = Atoms.from_poscar(file_path)
 
-        text = get_text(Atoms.from_dict(entry['atoms']), args.text)
-        text_dic['jid'].append(entry['jid'])
-        text_dic['formula'].append(entry['formula'])
+        text = get_text(atoms, args.text)
+        text_dic['jid'].append(compound_identifier)
+        text_dic['formula'].append(atoms.composition.formula)
         text_dic['text'].append(text)
     df_text = pd.DataFrame.from_dict(text_dic)
-    output_file = f"{args.text}_{args.start}_{end}_skip_{args.skip_sentence}.csv"
+    output_file = f"{args.text}_{args.start}_{args.end}_skip_{args.skip_sentence}.csv"
     if args.output_dir:
         output_file = os.path.join(args.output_dir, output_file)
     df_text.to_csv(output_file)
@@ -231,5 +235,8 @@ def main_mb(args):  # The function to process
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)     # for logging the code execution process, not functional for text generation
-    main(args)
+    if args.database == "matbench":
+        main_mb(args)
+    elif args.database == "jarvis":
+        main_jarvis(args)
     logging.info(f"Finished generate text")
