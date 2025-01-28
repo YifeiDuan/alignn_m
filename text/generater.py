@@ -17,7 +17,7 @@ import logging
 import pandas as pd
 import os
 # import chemnlp
-from chemnlp.utils.describe import atoms_describer
+# from chemnlp.utils.describe import atoms_describer
 from robocrys import StructureCondenser, StructureDescriber
 import warnings
 from collections import defaultdict
@@ -184,9 +184,9 @@ def get_text(atoms, text):
         return get_robo(atoms.pymatgen_converter())
     elif text == 'raw':
         return Poscar(atoms).to_string()
-    elif text == "chemnlp":
-        return describe_chemical_data(atoms_describer(atoms=atoms), skip=args.skip_sentence)
-    elif text == 'combo':
+    # elif text == "chemnlp":
+    #     return describe_chemical_data(atoms_describer(atoms=atoms), skip=args.skip_sentence)
+    elif text == 'chemnlp':
         return get_crystal_string_t(atoms)
 
 
