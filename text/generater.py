@@ -224,7 +224,7 @@ def main_mb(args):  # The function to process matbench datasets
         output_dir = args.output_dir
     else:
         parent_dir = os.path.dirname(struc_dir)     # The direct parent directory of the struc_dir
-        output_dir = os.path.join(parent_dir, f"text_{text}")
+        output_dir = os.path.join(parent_dir, f"text_{args.text}")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
