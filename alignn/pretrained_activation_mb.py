@@ -159,7 +159,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--file_path",
-    default="matbench_jdft2d_exfoliation_en_fold_0/mb-jdft2d-001",
+    default="matbench_jdft2d_exfoliation_en_fold_0/",
     help="Path to file.",
 )
 

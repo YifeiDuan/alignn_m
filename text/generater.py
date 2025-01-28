@@ -30,6 +30,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 parser = argparse.ArgumentParser(description='get embeddings on dataset')
 # parser.add_argument('--data_path', help='path to the dataset',default=None, type=str, required=False)
 parser.add_argument('--database', help='the source database of the property dataset', default="matbench", type=str, required=False)
+parser.add_argument('--struc_dir', help='path to access the directory containing all struc files', default="matbench_jdft2d/poscar", type=str, required=False)
 parser.add_argument('--start', default=0, type=int,required=False)
 # parser.add_argument('--input', help='input attributes set', default=None, type=str, required=False)
 parser.add_argument('--end', type=int, required=False)
@@ -213,12 +214,11 @@ def main_jarvis(args):  # The function to process jarvis datasets
 def main_mb(args):  # The function to process matbench datasets
     # dat = data('dft_3d')
     text_dic = defaultdict(list)
-    err_ct = 0
-    folder_path = args.prop_name + f"_fold_{args.fold}"     # folder that contains id_prop.csv and dataset-specific poscar files
+    struc_dir = args.struc_dir    # folder that contains id_prop.csv and dataset-specific poscar files
     for idx in tqdm(range(args.start+1, args.end+1), desc="Processing data"):
         compound_identifier = "mb-" + args.prop_name.split("_")[1] + f"-{idx.zfill(args.id_len)}"
         # e.g. mb-jdft2d-001
-        file_path = os.path.join(folder_path, compound_identifier)
+        file_path = os.path.join(struc_dir, compound_identifier)
         atoms = Atoms.from_poscar(file_path)
 
         text = get_text(atoms, args.text)
@@ -227,8 +227,16 @@ def main_mb(args):  # The function to process matbench datasets
         text_dic['text'].append(text)
     df_text = pd.DataFrame.from_dict(text_dic)
     output_file = f"{args.text}_{args.start}_{args.end}_skip_{args.skip_sentence}.csv"
+
     if args.output_dir:
-        output_file = os.path.join(args.output_dir, output_file)
+        output_dir = args.output_dir
+    else:
+        parent_dir = os.path.dirname(struc_dir)     # The direct parent directory of the struc_dir
+        output_dir = os.path.join(parent_dir, f"text_{text}")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    output_file = os.path.join(output_dir, output_file)
     df_text.to_csv(output_file)
     logging.info(f"Saved output text to {output_file}")
 
