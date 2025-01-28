@@ -14,7 +14,10 @@ def concat_id_prop_csv(prop_name="matbench_jdft2d_exfoliation_en"):
     
     df_all = df_all.drop_duplicates(subset=["id"]).sort_values(by=["id"])
     
-    save_dir = f"text/{prop_name}"
+    name_split = prop_name.split("_")
+    prop = name_split[0] + "_" + name_split[1]
+    
+    save_dir = f"../text/{prop}"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
         
