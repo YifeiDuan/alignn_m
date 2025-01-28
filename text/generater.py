@@ -17,7 +17,7 @@ import logging
 import pandas as pd
 import os
 # import chemnlp
-from chemnlp.chemnlp.utils.describe import atoms_describer
+from chemnlp.utils.describe import atoms_describer
 from robocrys import StructureCondenser, StructureDescriber
 import warnings
 from collections import defaultdict
