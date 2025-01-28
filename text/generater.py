@@ -243,7 +243,7 @@ def main_mb(args):  # The function to process matbench datasets
 
         if idx%10==0 or idx==args.end:
             with open(f"{output_dir}/text_dic.json", 'w') as file:
-                json.dump(data, file, indent=4)
+                json.dump(text_dic, file, indent=4)
 
     df_text = pd.DataFrame.from_dict(text_dic)
     output_file = f"{args.text}_{args.start}_{args.end}_skip_{args.skip_sentence}.csv"
