@@ -1,7 +1,5 @@
 import json
 import numpy as np
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from transformers import AutoTokenizer, GPT2Model, BertModel
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error
