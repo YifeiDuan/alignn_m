@@ -30,11 +30,11 @@ warnings.filterwarnings("ignore", category=UserWarning)
 parser = argparse.ArgumentParser(description='get embeddings on dataset')
 # parser.add_argument('--data_path', help='path to the dataset',default=None, type=str, required=False)
 parser.add_argument('--database', help='the source database of the property dataset', default="matbench", type=str, required=False)
-parser.add_argument('--struc_dir', help='path to access the directory containing all struc files', default="matbench_jdft2d/poscar", type=str, required=False)
+parser.add_argument('--struc_dir', help='path to access the directory containing all struc files', type=str, required=False)
 parser.add_argument('--start', default=0, type=int,required=False)
 # parser.add_argument('--input', help='input attributes set', default=None, type=str, required=False)
 parser.add_argument('--end', type=int, required=False)
-parser.add_argument('--id_len', default=3, type=int,required=True)
+parser.add_argument('--id_len', type=int,required=False)
 parser.add_argument('--output_dir', help='path to the save output embedding', default="./data/text", type=str, required=False)
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'],default='raw', type=str, required=False)
 parser.add_argument('--skip_sentence', help='skip the ith sentence or a specific topic', default="none", required=False)
@@ -214,6 +214,11 @@ def main_jarvis(args):  # The function to process jarvis datasets
 def main_mb(args):  # The function to process matbench datasets
     # dat = data('dft_3d')
     text_dic = defaultdict(list)
+    if not args.struc_dir:
+        raise Exception("please specify struc_dir: the directory path to structure files")
+    if not args.id_len:
+        raise Exception("please specify id_len: the identifier code length for the dataset, e.g. 3 for XXX, 4 for XXXX")
+    
     struc_dir = args.struc_dir    # folder that contains id_prop.csv and dataset-specific poscar files
     for idx in tqdm(range(args.start+1, args.end+1), desc="Processing data"):
         compound_identifier = "mb-" + args.prop_name.split("_")[1] + f"-{idx.zfill(args.id_len)}"
@@ -235,7 +240,7 @@ def main_mb(args):  # The function to process matbench datasets
         output_dir = os.path.join(parent_dir, f"text_{text}")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-        
+
     output_file = os.path.join(output_dir, output_file)
     df_text.to_csv(output_file)
     logging.info(f"Saved output text to {output_file}")
