@@ -219,6 +219,15 @@ def main_mb(args):  # The function to process matbench datasets
         raise Exception("please specify id_len: the identifier code length for the dataset, e.g. 3 for XXX, 4 for XXXX")
     
     struc_dir = args.struc_dir    # folder that contains id_prop.csv and dataset-specific poscar files
+
+    if args.output_dir:
+        output_dir = args.output_dir
+    else:
+        parent_dir = os.path.dirname(struc_dir)     # The direct parent directory of the struc_dir
+        output_dir = os.path.join(parent_dir, f"text_{text}")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     # for idx in tqdm(range(args.start+1, args.end+1), desc="Processing data"):
     for idx in range(args.start+1, args.end+1):
         compound_identifier = "mb-" + args.prop_name.split("_")[1] + f"-{str(idx).zfill(args.id_len)}"
@@ -231,16 +240,12 @@ def main_mb(args):  # The function to process matbench datasets
         text_dic['jid'].append(compound_identifier)
         text_dic['formula'].append(atoms.composition.formula)
         text_dic['text'].append(text)
+
+        with open(f"{output_dir}/text_dic.json", 'w') as file:
+            json.dump(data, file, indent=4)
+
     df_text = pd.DataFrame.from_dict(text_dic)
     output_file = f"{args.text}_{args.start}_{args.end}_skip_{args.skip_sentence}.csv"
-
-    if args.output_dir:
-        output_dir = args.output_dir
-    else:
-        parent_dir = os.path.dirname(struc_dir)     # The direct parent directory of the struc_dir
-        output_dir = os.path.join(parent_dir, f"text_{text}")
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     output_file = os.path.join(output_dir, output_file)
     df_text.to_csv(output_file)
