@@ -219,8 +219,10 @@ def main_mb(args):  # The function to process matbench datasets
         raise Exception("please specify id_len: the identifier code length for the dataset, e.g. 3 for XXX, 4 for XXXX")
     
     struc_dir = args.struc_dir    # folder that contains id_prop.csv and dataset-specific poscar files
-    for idx in tqdm(range(args.start+1, args.end+1), desc="Processing data"):
+    # for idx in tqdm(range(args.start+1, args.end+1), desc="Processing data"):
+    for idx in range(args.start+1, args.end+1):
         compound_identifier = "mb-" + args.prop_name.split("_")[1] + f"-{str(idx).zfill(args.id_len)}"
+        print(f"Generating for {compound_identifier}")
         # e.g. mb-jdft2d-001
         file_path = os.path.join(struc_dir, compound_identifier)
         atoms = Atoms.from_poscar(file_path)
