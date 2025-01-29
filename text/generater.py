@@ -175,8 +175,17 @@ def atoms_describer(
 def get_robo(structure=None):
     describer = StructureDescriber()
     condenser = StructureCondenser()
-    condensed_structure = condenser.condense_structure(structure)
-    description = describer.describe(condensed_structure)
+    err_flag = False
+    try:
+        condensed_structure = condenser.condense_structure(structure)
+    except (ValueError) as e:
+        print(f"Caught an error: {e}")
+        err_flag = True
+
+    if err_flag is False:
+        description = describer.describe(condensed_structure)
+    else:
+        description = f"Skipped this material, due to the following error: {e}"
     return description
 
 def get_text(atoms, text):
