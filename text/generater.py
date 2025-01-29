@@ -181,11 +181,12 @@ def get_robo(structure=None):
     except (ValueError) as e:
         print(f"Caught an error: {e}")
         err_flag = True
+        err_message = e
 
     if err_flag is False:
         description = describer.describe(condensed_structure)
     else:
-        description = f"Skipped this material, due to the following error: {e}"
+        description = f"Skipped this material, due to the following error: {err_message}"
     return description
 
 def get_text(atoms, text):
