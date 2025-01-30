@@ -21,7 +21,7 @@ import pandas as pd
 import os
 # import chemnlp
 # os.environ["CUDA_VISIBLE_DEVICES"]="0"
-from chemnlp.chemnlp.utils.describe import atoms_describer
+# from chemnlp.utils.describe import atoms_describer
 from robocrys import StructureCondenser, StructureDescriber
 from jarvis.analysis.structure.spacegroup import Spacegroup3D
 from jarvis.analysis.diffraction.xrd import XRD
@@ -251,7 +251,7 @@ def get_robo(structure=None):
     description = describer.describe(condensed_structure)
     return description
 
-def preprocess_data(args):
+def preprocess_data_jarvis(args):
     dat = data('dft_3d')
     dd = []
     if args.label:
@@ -340,6 +340,92 @@ def preprocess_data(args):
     #labels = np.array([entry['exfoliation_energy'] for entry in dat])
 
     return embeddings, samples
+
+
+def preprocess_data_mb(args):
+    # 1. Load Tokenizer
+    llm = args.llm
+    ### by default: llm = "matbert-base-cased"
+    if llm == "matbert-base-cased":
+        tokenizer = BertTokenizerFast.from_pretrained(os.path.join("./matbert", llm), do_lower_case=False)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(llm)
+    # 2. Load Model
+    device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
+    if "gpt2" in llm.lower():
+        model = GPT2Model.from_pretrained(llm)
+    elif "bert" in llm.lower():
+        try:
+            model = BertModel.from_pretrained(llm)
+        except:
+            model = BertModel.from_pretrained(os.path.join("./matbert", llm))
+        
+    elif "opt" in llm.lower():
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-6.7b", 
+            device_map='auto',
+            quantization_config=quantization_config
+        )
+
+    model.to(device)
+
+    # 3. Load generated text data
+    # 4. Get vectorized embeddings
+    embeddings = []
+    samples=[]
+    # print(model)
+    max_token_length = model.config.max_position_embeddings
+    logging.info(f"Max token length: {max_token_length}")
+    if args.cache_csv:
+        assert args.text in args.cache_csv
+        df_text = pd.read_csv(args.cache_csv, index_col = 'jid')
+
+    for entry in tqdm(dat, desc="Processing data"):
+        if args.sample:
+            if entry['jid'] not in selected_samples:
+                continue
+        if args.cache_csv:
+            if entry['jid'] in df_text.index:
+                text = df_text.at[entry['jid'],'text']
+            else:
+                continue
+        else:
+            if args.text == 'raw':
+                text = Poscar(Atoms.from_dict(entry['atoms'])).to_string()
+            elif args.text == 'chemnlp':
+                text = json.dumps(atoms_describer(atoms=Atoms.from_dict(entry['atoms'])))
+            elif args.text == "robo":
+                try:
+                    text = get_robo(Atoms.from_dict(entry['atoms']).pymatgen_converter())
+                except Exception as exp: 
+                    pass
+            elif args.text == "combo":
+                text = get_crystal_string_t(Atoms.from_dict(entry['atoms']))
+
+        if args.skip_sentence is not None:
+            text = remove_sentence_by_index(text, args.skip_sentence, args.text)
+        elif args.mask_words:
+            text = mask_words(text, words_index)
+            print(text)
+        inputs = tokenizer(text, max_length=512, truncation=True, return_tensors="pt").to(device)
+        if len(inputs['input_ids'][0]) <= max_token_length:
+            with torch.no_grad():
+                with torch.cuda.amp.autocast():
+                    output = model(**inputs)
+            if device.type == 'cuda':
+                emb = output.last_hidden_state.mean(dim=1).cpu().numpy().flatten()
+            else:
+                emb = output.last_hidden_state.mean(dim=1).numpy().flatten()
+            embeddings.append(emb)
+            samples.append(entry['jid'])
+
+    embeddings = np.vstack(embeddings)
+    #labels = np.array([entry['exfoliation_energy'] for entry in dat])
+
+    return embeddings, samples
+
+
 
 def save_data(embeddings, samples):
     n = len(embeddings)
