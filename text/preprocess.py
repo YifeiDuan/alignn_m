@@ -359,6 +359,10 @@ def preprocess_data_jarvis(args):
 
 
 def preprocess_data_mb(args):
+
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
     # 1. Load Tokenizer
     llm = args.llm
     ### by default: llm = "matbert-base-cased"
