@@ -404,7 +404,7 @@ def preprocess_data_mb(args):
     assert args.text in args.cache_csv
     df_text = pd.read_csv(args.cache_csv, index_col = 0)
 
-    for _, row in tqdm(df_text.iterrows(), total=len(df_text), desc="Inferring vectorized text embeddings"):
+    for num, row in tqdm(df_text.iterrows(), total=len(df_text), desc="Inferring vectorized text embeddings"):
 
         jid = row["jid"]
         formula = row["formula"]
@@ -429,7 +429,7 @@ def preprocess_data_mb(args):
             samples.append(jid)
 
 
-        if int(jid.split("_")[-1])%50==0:
+        if (num+1)%50==0:
             sample_embeddings = {
                 "jid": samples,
                 "embedding": embeddings
