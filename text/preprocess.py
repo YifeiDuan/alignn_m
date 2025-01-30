@@ -441,11 +441,12 @@ def preprocess_data_mb(args):
         json.dump(sample_embeddings, file, indent=4)
 
 
-    embeddings = np.vstack(embeddings)
-    #labels = np.array([entry['exfoliation_energy'] for entry in dat])
-    
 
     # 6. Save embeddings as .csv
+    embeddings = np.vstack(embeddings)
+    #labels = np.array([entry['exfoliation_energy'] for entry in dat])
+
+
     n = len(embeddings)
     assert n == len(samples)
     df = pd.DataFrame(embeddings, index=samples)
