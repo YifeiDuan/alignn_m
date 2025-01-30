@@ -37,6 +37,7 @@ SEED = 1
 
 parser = argparse.ArgumentParser(description='get embeddings on dataset')
 # parser.add_argument('--data_path', help='path to the dataset',default=None, type=str, required=False)
+parser.add_argument('--database', help='the source database of the property dataset', default="matbench", type=str, required=False)
 parser.add_argument('--label', help='output variable', default=None, type=str,required=False)
 # parser.add_argument('--input', help='input attributes set', default=None, type=str, required=False)
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'],default='raw', type=str, required=False)
