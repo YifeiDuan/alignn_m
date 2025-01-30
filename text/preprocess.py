@@ -402,7 +402,7 @@ def preprocess_data_mb(args):
         raise Exception("please specify cache_csv: the csv file with generated text descriptions for each compound")
     
     assert args.text in args.cache_csv
-    df_text = pd.read_csv(args.cache_csv, index_col = 'jid')
+    df_text = pd.read_csv(args.cache_csv, index_col = 0)
 
     for _, row in tqdm(df_text.iterrows(), total=len(df_text), desc="Inferring vectorized text embeddings"):
 
@@ -452,24 +452,6 @@ def preprocess_data_mb(args):
     #labels = np.array([entry['exfoliation_energy'] for entry in dat])
 
 
-    n = len(embeddings)
-    assert n == len(samples)
-    df = pd.DataFrame(embeddings, index=samples)
-
-    n = len(df)
-    file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_{n}.csv"
-    if args.skip_sentence is not None:
-        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_{n}.csv"
-    if args.mask_words is not None:
-        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words[0]}_{n}.csv"
-    if args.output_dir:
-        file_path = os.path.join(args.output_dir, file_path) 
-    df.to_csv(file_path)
-    logging.info(f"Saved to {file_path}")
-
-
-
-def save_data(embeddings, samples):
     n = len(embeddings)
     assert n == len(samples)
     df = pd.DataFrame(embeddings, index=samples)
