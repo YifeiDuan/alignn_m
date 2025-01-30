@@ -432,7 +432,7 @@ def preprocess_data_mb(args):
         if (num+1)%50==0:
             sample_embeddings = {
                 "jid": samples,
-                "embedding": embeddings
+                "embedding": [list(embedding) for embedding in embeddings]
             }
             with open(f"{args.output_dir}/sample_embeddings.json", 'w') as file:
                 json.dump(sample_embeddings, file, indent=4)
