@@ -44,12 +44,12 @@ parser.add_argument('--llm', help='pre-trained llm to use', default='gpt2', type
 parser.add_argument('--output_dir', help='path to the save output embedding', default="./data/embeddings//", type=str, required=False)
 parser.add_argument('--cache_csv', help='path that stores text', default=None, type=str, required=False)
 parser.add_argument('--skip_sentence', help='text topic to skip', default=None, required=False)
-parser.add_argument('--mask_words', action='store_true', help='use cpu only', required=False)
+parser.add_argument('--mask_words', default=None, help='the word indices to skip, e.g.[0,20]', required=False)
 parser.add_argument('--sample', action='store_true', help='save samples from lists only', required=False)
 parser.add_argument('--cpu', action='store_true', help='use cpu only', required=False)
 args,_ = parser.parse_known_args()
 
-selected_samples = ["JVASP-1151"]
+# selected_samples = ["JVASP-1151"]
 # words_index = [2,10]
 # words_index = [31]
 # words_index = [37]
@@ -339,14 +339,29 @@ def preprocess_data_jarvis(args):
     embeddings = np.vstack(embeddings)
     #labels = np.array([entry['exfoliation_energy'] for entry in dat])
 
-    return embeddings, samples
+
+    # Save data
+    n = len(embeddings)
+    assert n == len(samples)
+    df = pd.DataFrame(embeddings, index=samples)
+
+    n = len(df)
+    file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_{n}.csv"
+    if args.skip_sentence is not None:
+        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_{n}.csv"
+    if args.mask_words is not None:
+        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words[0]}_{n}.csv"
+    if args.output_dir:
+        file_path = os.path.join(args.output_dir, file_path) 
+    df.to_csv(file_path)
+    logging.info(f"Saved to {file_path}")
 
 
 def preprocess_data_mb(args):
     # 1. Load Tokenizer
     llm = args.llm
     ### by default: llm = "matbert-base-cased"
-    ### for this model, we need to download it first as in llm/download_llm.ipynb
+    ### for this model, we need to download it first as in download_llm.ipynb
     if llm == "matbert-base-cased":
         tokenizer = BertTokenizerFast.from_pretrained(os.path.join("./matbert", llm), do_lower_case=False)
     else:
@@ -376,38 +391,25 @@ def preprocess_data_mb(args):
     embeddings = []
     samples=[]
     # print(model)
-    max_token_length = model.config.max_position_embeddings
+    max_token_length = model.config.max_position_embeddings     # config loaded along with the model
     logging.info(f"Max token length: {max_token_length}")
-    if args.cache_csv:
-        assert args.text in args.cache_csv
-        df_text = pd.read_csv(args.cache_csv, index_col = 'jid')
+    if not args.cache_csv:
+        raise Exception("please specify cache_csv: the csv file with generated text descriptions for each compound")
+    
+    assert args.text in args.cache_csv
+    df_text = pd.read_csv(args.cache_csv, index_col = 'jid')
 
-    for entry in tqdm(dat, desc="Processing data"):
-        if args.sample:
-            if entry['jid'] not in selected_samples:
-                continue
-        if args.cache_csv:
-            if entry['jid'] in df_text.index:
-                text = df_text.at[entry['jid'],'text']
-            else:
-                continue
-        else:
-            if args.text == 'raw':
-                text = Poscar(Atoms.from_dict(entry['atoms'])).to_string()
-            elif args.text == 'chemnlp':
-                text = json.dumps(atoms_describer(atoms=Atoms.from_dict(entry['atoms'])))
-            elif args.text == "robo":
-                try:
-                    text = get_robo(Atoms.from_dict(entry['atoms']).pymatgen_converter())
-                except Exception as exp: 
-                    pass
-            elif args.text == "combo":
-                text = get_crystal_string_t(Atoms.from_dict(entry['atoms']))
+    for _, row in tqdm(df_text.iterrows(), total=len(df_text), desc="Inferring vectorized text embeddings"):
+
+        jid = row["jid"]
+        formula = row["formula"]
+        text = row["text"]
+       
 
         if args.skip_sentence is not None:
             text = remove_sentence_by_index(text, args.skip_sentence, args.text)
-        elif args.mask_words:
-            text = mask_words(text, words_index)
+        elif args.mask_words is not None:
+            text = mask_words(text, args.mask_words)
             print(text)
         inputs = tokenizer(text, max_length=512, truncation=True, return_tensors="pt").to(device)
         if len(inputs['input_ids'][0]) <= max_token_length:
@@ -419,12 +421,45 @@ def preprocess_data_mb(args):
             else:
                 emb = output.last_hidden_state.mean(dim=1).numpy().flatten()
             embeddings.append(emb)
-            samples.append(entry['jid'])
+            samples.append(jid)
+
+
+        if int(jid.split("_")[-1])%50==0:
+            sample_embeddings = {
+                "jid": samples,
+                "embedding": embeddings
+            }
+            with open(f"{args.output_dir}/sample_embeddings.json", 'w') as file:
+                json.dump(sample_embeddings, file, indent=4)
+
+    # 5. Save sample jids and embeddings as json
+    sample_embeddings = {
+                "jid": samples,
+                "embedding": embeddings
+            }
+    with open(f"{args.output_dir}/sample_embeddings.json", 'w') as file:
+        json.dump(sample_embeddings, file, indent=4)
+
 
     embeddings = np.vstack(embeddings)
     #labels = np.array([entry['exfoliation_energy'] for entry in dat])
+    
 
-    return embeddings, samples
+    # 6. Save embeddings as .csv
+    n = len(embeddings)
+    assert n == len(samples)
+    df = pd.DataFrame(embeddings, index=samples)
+
+    n = len(df)
+    file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_{n}.csv"
+    if args.skip_sentence is not None:
+        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_{n}.csv"
+    if args.mask_words is not None:
+        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words[0]}_{n}.csv"
+    if args.output_dir:
+        file_path = os.path.join(args.output_dir, file_path) 
+    df.to_csv(file_path)
+    logging.info(f"Saved to {file_path}")
 
 
 
@@ -437,8 +472,8 @@ def save_data(embeddings, samples):
     file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_{n}.csv"
     if args.skip_sentence is not None:
         file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_{n}.csv"
-    if args.mask_words:
-        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_mask_{words_index[0]}_{n}.csv"
+    if args.mask_words is not None:
+        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words[0]}_{n}.csv"
     if args.output_dir:
         file_path = os.path.join(args.output_dir, file_path) 
     df.to_csv(file_path)
@@ -449,8 +484,10 @@ def save_data(embeddings, samples):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO) 
-    embeddings, samples = preprocess_data(args)
+    if args.database == "matbench":
+        preprocess_data_mb(args)
+    elif args.database == "jarvis":
+        preprocess_data_jarvis(args)
     logging.info(f"Finished generate embeddings")
-    save_data(embeddings, samples)
     
 
