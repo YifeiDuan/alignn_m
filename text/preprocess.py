@@ -346,6 +346,7 @@ def preprocess_data_mb(args):
     # 1. Load Tokenizer
     llm = args.llm
     ### by default: llm = "matbert-base-cased"
+    ### for this model, we need to download it first as in llm/download_llm.ipynb
     if llm == "matbert-base-cased":
         tokenizer = BertTokenizerFast.from_pretrained(os.path.join("./matbert", llm), do_lower_case=False)
     else:
