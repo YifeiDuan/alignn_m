@@ -25,12 +25,12 @@ warnings.filterwarnings('ignore')
 mb = MatbenchBenchmark(
     autoload=False,
     subset=[
-        # "matbench_jdft2d",
+        "matbench_jdft2d",
         # "matbench_dielectric",
         # "matbench_phonons",
-        # "matbench_perovskites",
-        "matbench_log_gvrh",
+        # "matbench_log_gvrh",
         # "matbench_log_kvrh",
+        # "matbench_perovskites",
         # "matbench_mp_e_form",
         # "matbench_mp_gap",
         # "matbench_mp_is_metal",
@@ -245,8 +245,8 @@ def train_tasks(
                 config["keep_data_order"] = True
                 config["batch_size"] = 32
                 # TODO: after debugging, change epochs back to 500
-                config["epochs"] = 500
-                # config["epochs"] = 10
+                # config["epochs"] = 500
+                config["epochs"] = 10
                 fname = "config_fold_" + str(ii) + ".json"
                 dumpjson(data=config, filename=fname)
                 f.close()
