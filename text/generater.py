@@ -200,7 +200,7 @@ def get_text(atoms, text):
         return get_crystal_string_t(atoms)
 
 
-def main_jarvis(args):  # The function to process jarvis datasets
+def main_jv_mp(args):  # The function to process jarvis datasets
     dat = data('dft_3d')
     text_dic = defaultdict(list)
     err_ct = 0
@@ -267,6 +267,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)     # for logging the code execution process, not functional for text generation
     if args.database == "matbench":
         main_mb(args)
-    elif args.database == "jarvis":
-        main_jarvis(args)
+    elif args.database == "jarvis" or "mp":
+        main_jv_mp(args)
     logging.info(f"Finished generate text")

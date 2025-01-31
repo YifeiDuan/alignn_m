@@ -252,7 +252,7 @@ def get_robo(structure=None):
     description = describer.describe(condensed_structure)
     return description
 
-def preprocess_data_jarvis(args):
+def preprocess_data_jv_mp(args):
     dat = data('dft_3d')
     dd = []
     if args.label:
@@ -466,8 +466,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO) 
     if args.database == "matbench":
         preprocess_data_mb(args)
-    elif args.database == "jarvis":
-        preprocess_data_jarvis(args)
+    elif args.database == "jarvis" or "mp":
+        preprocess_data_jv_mp(args)
     logging.info(f"Finished generate embeddings")
     
 
