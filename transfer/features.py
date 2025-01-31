@@ -24,14 +24,23 @@ import re
 
 SEED = 1
 props_jv_mp = ['formation_energy_peratom', 'ehull', 'mbj_bandgap', 'slme', 'spillage', 'magmom_outcar', 'Tc_supercon']
-props_mb = 
+props_mb = [
+                "matbench_jdft2d",
+                "matbench_phonons",
+                "matbench_dielectric",
+                "matbench_log_gvrh",
+                "matbench_log_kvrh",
+                "matbench_perovskites",
+                "matbench_mp_e_form",
+                "matbench_mp_gap",
+                "matbench_mp_is_metal",
+            ]
 # props = ['formation_energy_peratom']
 
 
 parser = argparse.ArgumentParser(description='run ml regressors on dataset')
-# parser.add_argument('--data_path', help='path to the dataset',default=None, type=str, required=False)
-parser.add_argument('--input_dir', help='input data directory', default="./data/embeddings", type=str,required=False)
-# parser.add_argument('--input', help='input attributes set', default=None, type=str, required=False)
+parser.add_argument('--database', help='the source database of the property dataset', default="matbench", type=str, required=False)
+parser.add_argument('--input_dir', help='input data directory', default="./data/embeddings", type=str,required=False)   # For text embeddings
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'], default='robo', type=str, required=False)
 parser.add_argument('--llm', help='pre-trained llm to use', default='gpt2', type=str,required=False)
 parser.add_argument('--save_data', action='store_true')
@@ -41,7 +50,17 @@ parser.add_argument('--split_dir', type=str, required=False)
 parser.add_argument('--sample', action='store_true')
 parser.add_argument('--skip_sentence', help='skip the ith sentence', default=None, required=False)
 parser.add_argument('--mask_words', help='skip the ith word', default=None, required=False)
-parser.add_argument('--prop', help="specify property from 'formation_energy_peratom', 'ehull', 'mbj_bandgap', 'slme', 'spillage', 'magmom_outcar', 'Tc_supercon'", default='all', required=False)
+parser.add_argument('--prop', help="specify property from \
+                    'matbench_jdft2d',\
+                    'matbench_phonons',\
+                    'matbench_dielectric',\
+                    'matbench_log_gvrh',\
+                    'matbench_log_kvrh',\
+                    'matbench_perovskites',\
+                    'matbench_mp_e_form',\
+                    'matbench_mp_gap',\
+                    'matbench_mp_is_metal',\
+                    'formation_energy_peratom', 'ehull', 'mbj_bandgap', 'slme', 'spillage', 'magmom_outcar', 'Tc_supercon'", default='all', required=False)
 
 args =  parser.parse_args()
 config = configparser.ConfigParser()
@@ -152,16 +171,24 @@ def prepare_dataset_jv_mp(args, prop):
     return embeddings, labels
 
 def prepare_dataset_mb(args, prop):
-    embeddings = []
-    labels = []
+    embeddings = [] # text embeddings as numpy arrays
+    labels = []     # property target values
+    ids = []        # jids, e.g. matbench-idft2d-001
+
+    # 1. Load id_prop.csv
+    df_id_prop = pd.read_csv(os.path.join(args.input_dir, "id_prop_all.csv"), index_col="id")
+
+    # 2. Load text embeddings
+    text_embed_subdir = f"embedding_*"
     file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_*.csv"
     if args.skip_sentence is not None:
         file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}*.csv"
     if args.mask_words is not None:
         file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}*.csv"
     if args.input_dir:
+        file_path = os.path.join(text_embed_subdir, file_path)
         file_path = os.path.join(args.input_dir, file_path)
-        print(file_path)
+        print(file_path)    # Should be something like "YY/text/matbench_XX/embedding_XX/embeddings_MM_robo_*.csv"
     embed_file = glob.glob(file_path)
 
     if len(embed_file)>1:
@@ -175,23 +202,22 @@ def prepare_dataset_mb(args, prop):
     
     logging.info(f"Found embedding file: {embed_file}")
     df_embed = pd.read_csv(embed_file[0], index_col = 0)
-    dat = data('dft_3d')
-    ids = []
 
 
-    for i in tqdm(dat, desc="Preparing data"):
+    # 3. Match text embeddings with id and target (as in id_prop.csv)
+    for jid, row in tqdm(df_embed.iterrows(), total=len(df_embed), desc="Matching id, target and text embeddings"):
         if args.sample:
-            if i['jid'] not in selected_samples:
+            if jid not in selected_samples:
                 continue
-        if i[prop]!='na':
-            if i['jid'] in df_embed.index:
-                embeddings.append(df_embed.loc[i['jid']].values)
-                labels.append(i[prop])
-                ids.append(i['jid'])
+        if row["target"]!='na':
+            if jid in df_id_prop.index:
+                embeddings.append(row.values)
+                labels.append(df_id_prop.loc[jid]["target"])
+                ids.append(jid)
     
-
+    # 4. Merge text emebddings with ids and targets into a df
     num_cols = len(embeddings[0])
-    col_names = [i for i in range(num_cols)]
+    col_names = [i for i in range(num_cols)]    # cols for text embeddings
     df_data = pd.DataFrame(embeddings, columns=col_names)
     df_data[prop] = labels
     df_data["ids"] = ids
@@ -203,9 +229,14 @@ def prepare_dataset_mb(args, prop):
         dataset_filename = f"dataset_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_prop_{prop}"
     if args.mask_words is not None:
         dataset_filename = f"dataset_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}_prop_{prop}"
-    dataset_path = f"./data/{dataset_filename}"
-    df_data['ids'] = df_data['ids'] + '.vasp'
-    # TODO: ALIGNN features
+
+    # 5. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
+    data_save_dir = f"./data/{prop}"
+    if not os.path.exists(data_save_dir):
+        os.makedirs(data_save_dir)
+    dataset_path = f"{data_save_dir}/{dataset_filename}"
+    df_data['ids'] = df_data['ids']
+    # TODO: ALIGNN features, needs to first process x, y, z into ONE single dataset
     if args.gnn_file_path:    
         df_gnn = pd.read_csv(args.gnn_file_path)
         dataset_path = dataset_path.replace("dataset_", "dataset_alignn_")
