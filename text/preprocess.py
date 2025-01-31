@@ -428,26 +428,15 @@ def preprocess_data_mb(args):
             embeddings.append(emb)
             samples.append(jid)
 
-        if (num+1)%50==0:
-            json_embeddings = [list(embedding) for embedding in embeddings]
-            json_embeddings = [[np.float64(val) for val in json_embedding] for json_embedding in json_embeddings]
-            sample_embeddings = {
-                "jid": samples,
-                "embedding": json_embeddings
-            }
-            with open(f"{args.output_dir}/sample_embeddings.json", 'w') as file:
-                json.dump(sample_embeddings, file, indent=4)
-
-    # 5. Save sample jids and embeddings as json
-    json_embeddings = [list(embedding) for embedding in embeddings]
-    json_embeddings = [[np.float64(val) for val in json_embedding] for json_embedding in json_embeddings]
-    sample_embeddings = {
-                "jid": samples,
-                "embedding": json_embeddings
-            }
-    with open(f"{args.output_dir}/sample_embeddings.json", 'w') as file:
-        json.dump(sample_embeddings, file, indent=4)
-
+        # if (num+1)%50==0:
+        #     json_embeddings = [list(embedding) for embedding in embeddings]
+        #     json_embeddings = [[np.float64(val) for val in json_embedding] for json_embedding in json_embeddings]
+        #     sample_embeddings = {
+        #         "jid": samples,
+        #         "embedding": json_embeddings
+        #     }
+        #     with open(f"{args.output_dir}/sample_embeddings.json", 'w') as file:
+        #         json.dump(sample_embeddings, file, indent=4)
 
 
     # 6. Save embeddings as .csv
