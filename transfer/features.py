@@ -235,25 +235,28 @@ def prepare_dataset_mb(args, prop):
     if not os.path.exists(data_save_dir):
         os.makedirs(data_save_dir)
     dataset_path = f"{data_save_dir}/{dataset_filename}"
-    df_data['ids'] = df_data['ids']
     # TODO: ALIGNN features, needs to first process x, y, z into ONE single dataset
+    """
+    df_gnn should have the columns:
+        id: e.g. mb-jdft2d-001
+        0: first  entry of gnn embedding vector
+        1: second entry of gnn embedding vector
+        ...
+    """
     if args.gnn_file_path:    
         df_gnn = pd.read_csv(args.gnn_file_path)
         dataset_path = dataset_path.replace("dataset_", "dataset_alignn_")
         if args.gnn_only:
             df_gnn = pd.read_csv(args.gnn_file_path)
-            df_gnn['id'] = df_gnn['id'] + '.vasp'
-
-
             df_data = df_data[[prop, "ids"]].merge(df_gnn, how='inner', left_on="ids", right_on="id", suffixes=('_lm', '_gnn'))
 
         else:
-            df_gnn['id'] = df_gnn['id'] + '.vasp'
             df_data = df_data.merge(df_gnn, how='inner', left_on="ids", right_on="id", suffixes=('_lm', '_gnn'))
             print(df_data.head())
-        df_data[prop] = df_data.pop(prop)
-        df_data["ids"] = df_data.pop("ids")
+        df_data[prop] = df_data.pop(prop)       # Reordering columns, "matbench_PROP" to the last col
+        df_data["ids"] = df_data.pop("ids")     # Reordering columns, "ids" to the last col
 
+    # TODO: Specify train test splits with pre_saved split ids
     if args.split_dir:
         split_path = os.path.join(args.split_dir, f"dataset_split_{prop}.json")
         assert prop in split_path
