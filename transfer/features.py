@@ -243,6 +243,7 @@ def prepare_dataset_mb(args, prop):
         1: second entry of gnn embedding vector
         ...
     """
+    
     if args.gnn_file_path:    
         df_gnn = pd.read_csv(args.gnn_file_path)
         dataset_path = dataset_path.replace("dataset_", "dataset_alignn_")
