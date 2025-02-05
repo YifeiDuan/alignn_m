@@ -182,6 +182,7 @@ class TrainingConfig(BaseSettings):
     target_multiplication_factor: Optional[float] = None
     epochs: int = 300
     batch_size: int = 64
+    test_batch_size: int = 32
     weight_decay: float = 0
     learning_rate: float = 1e-2
     filename: str = "sample"
