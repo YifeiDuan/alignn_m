@@ -16,6 +16,7 @@
     "target_multiplication_factor": null,
     "epochs": 3,
     "batch_size": 2,
+    "test_batch_size": 1,
     "weight_decay": 1e-05,
     "learning_rate": 0.001,
     "filename": "sample",

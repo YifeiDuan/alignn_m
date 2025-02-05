@@ -392,7 +392,7 @@ def train_for_folder(
         test_ratio=config.test_ratio,
         line_graph=line_graph,
         batch_size=config.batch_size,
-        test_batch_size=config.batch_size,
+        test_batch_size=config.test_batch_size,
         atom_features=config.atom_features,
         neighbor_strategy=config.neighbor_strategy,
         standardize=config.atom_features != "cgcnn",

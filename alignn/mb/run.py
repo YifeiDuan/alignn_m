@@ -244,6 +244,7 @@ def train_tasks(
                 config["n_test"] = n_test
                 config["keep_data_order"] = True
                 config["batch_size"] = 32
+                config["test_batch_size"] = 32
                 # TODO: after debugging, change epochs back to 500
                 config["epochs"] = 500
                 # config["epochs"] = 10
