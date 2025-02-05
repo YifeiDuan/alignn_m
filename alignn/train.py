@@ -587,7 +587,8 @@ def train_dgl_prop(
             with torch.no_grad():
                 for dat in test_loader:
                     g, lg, target = dat
-                    out_data = net([g.to(device), lg.to(device)])
+                    # out_data = net([g.to(device), lg.to(device)])
+                    out_data = best_model([g.to(device), lg.to(device)])
                     # out_data = net([g.to(device), lg.to(device)])["out"]
                     out_data = out_data.cpu().numpy().tolist()
                     if config.standard_scalar_and_pca:
@@ -640,7 +641,8 @@ def train_dgl_prop(
             with torch.no_grad():
                 for dat in train_loader:
                     g, lg, target = dat
-                    out_data = net([g.to(device), lg.to(device)])
+                    # out_data = net([g.to(device), lg.to(device)])
+                    out_data = best_model([g.to(device), lg.to(device)])
                     # out_data = net([g.to(device), lg.to(device)])["out"]
                     out_data = out_data.cpu().numpy().tolist()
                     if config.standard_scalar_and_pca:
