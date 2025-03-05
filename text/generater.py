@@ -287,8 +287,10 @@ def main_zeo(args):
     for idx, file_path in enumerate(files):      # file_path: e.g. "../zeo_data/zeolite-property/MOR_1.cif" 
         identifier = file_path.split("/")[-1].split(".")[0]      # identifer: e.g. "MOR_1"
         print(f"Generating for {identifier}")
-        # e.g. mb-jdft2d-001
-        atoms = Atoms.from_poscar(file_path)
+        if args.format == "poscar":
+            atoms = Atoms.from_poscar(file_path)
+        elif args.format == "cif":
+            atoms = Atoms.from_cif(file_path)
 
         text = get_text(atoms, args.text)
         text_dic['jid'].append(identifier)
