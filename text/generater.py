@@ -22,6 +22,7 @@ from robocrys import StructureCondenser, StructureDescriber
 import warnings
 from collections import defaultdict
 import logging
+import glob
 
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -263,10 +264,55 @@ def main_mb(args):  # The function to process matbench datasets
     logging.info(f"Saved output text to {output_file}")
 
 
+
+def main_zeo(args):
+    text_dic = defaultdict(list)
+    if not args.struc_dir:
+        raise Exception("please specify struc_dir: the directory path to structure files")
+    
+    struc_dir = args.struc_dir    # folder that contains id_prop.csv and dataset-specific poscar files
+
+    if args.output_dir:
+        output_dir = args.output_dir
+    else:
+        parent_dir = os.path.dirname(struc_dir)     # The direct parent directory of the struc_dir
+        output_dir = os.path.join(parent_dir, f"text_{args.text}")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+
+    ### Access all .cif files
+    files = glob.glob(f"{args.struc_dir}/*.cif")  # List of all .cif files in the directory
+        
+    for idx, file_path in enumerate(files):      # file_path: e.g. "../zeo_data/zeolite-property/MOR_1.cif" 
+        identifier = file_path.split("/")[-1].split(".")[0]      # identifer: e.g. "MOR_1"
+        print(f"Generating for {identifier}")
+        # e.g. mb-jdft2d-001
+        atoms = Atoms.from_poscar(file_path)
+
+        text = get_text(atoms, args.text)
+        text_dic['jid'].append(identifier)
+        text_dic['formula'].append(atoms.composition.formula)
+        text_dic['text'].append(text)
+
+        if idx%10==0 or idx==len(files)-1:
+            with open(f"{output_dir}/text_dic.json", 'w') as json_file:
+                json.dump(text_dic, json_file, indent=4)
+
+    df_text = pd.DataFrame.from_dict(text_dic)
+    output_file = f"{args.text}_{args.start}_{args.end}_skip_{args.skip_sentence}.csv"
+
+    output_file = os.path.join(output_dir, output_file)
+    df_text.to_csv(output_file)
+    logging.info(f"Saved output text to {output_file}")
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)     # for logging the code execution process, not functional for text generation
     if args.database == "matbench":
         main_mb(args)
+    elif args.database == "zeo":
+        main_zeo(args)
     elif args.database == "jarvis" or "mp":
         main_jv_mp(args)
     logging.info(f"Finished generate text")
