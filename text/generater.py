@@ -36,7 +36,7 @@ parser.add_argument('--start', default=0, type=int,required=False)
 parser.add_argument('--end', type=int, required=False)
 parser.add_argument('--id_len', type=int,required=False)
 parser.add_argument('--output_dir', help='path to the save output embedding', type=str, required=False)
-parser.add_argument('--format', help='structure file format', choices=['poscar', 'cif'], type=str, required=False)
+parser.add_argument('--struc_format', help='structure file format', choices=['poscar', 'cif'], type=str, required=False)
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'],default='raw', type=str, required=False)
 parser.add_argument('--skip_sentence', help='skip the ith sentence or a specific topic', default="none", required=False)
 args,_ = parser.parse_known_args()
@@ -288,9 +288,9 @@ def main_zeo(args):
     for idx, file_path in enumerate(files):      # file_path: e.g. "../zeo_data/zeolite-property/MOR_1.cif" 
         identifier = file_path.split("/")[-1].split(".")[0]      # identifer: e.g. "MOR_1"
         print(f"Generating for {identifier}")
-        if args.format == "poscar":
+        if args.struc_format == "poscar":
             atoms = Atoms.from_poscar(file_path)
-        elif args.format == "cif":
+        elif args.struc_format == "cif":
             atoms = Atoms.from_cif(file_path)
 
         text = get_text(atoms, args.text)
