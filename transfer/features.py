@@ -205,11 +205,11 @@ def prepare_dataset_mb(args, prop):
 
 
     # 3. Match text embeddings with id and target (as in id_prop.csv)
-    for jid, row in tqdm(df_embed.iterrows(), total=len(df_embed), desc="Matching id, target and text embeddings"):
+    for jid, row in tqdm(df_id_prop.iterrows(), total=len(df_id_prop), desc="Matching id, target and text embeddings"):
         if row["target"]!='na':
-            if jid in df_id_prop.index:
-                embeddings.append(row.values)
-                labels.append(df_id_prop.loc[jid]["target"])
+            if jid in df_embed.index:
+                embeddings.append(df_embed.loc[jid].values)
+                labels.append(row["target"])
                 ids.append(jid)
     
     # 4. Merge text emebddings with ids and targets into a df
