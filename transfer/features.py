@@ -270,8 +270,9 @@ def prepare_dataset_mb(args, prop):
             ### Filter merged df_data down to only relevant ids of this subset
             df_data_subset = df_data[df_data["ids"].isin(subset_ids)]
             ### Save the subset of merged multimodal data
-            df_data_subset.to_csv(os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv"))
-            logging.info(f"Saved subset dataset to {os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")}")
+            save_path = os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")
+            df_data_subset.to_csv(save_path)
+            logging.info(f"Saved subset dataset to {save_path}")
     
 
     return embeddings, labels
