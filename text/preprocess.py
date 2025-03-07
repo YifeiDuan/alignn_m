@@ -253,6 +253,9 @@ def get_robo(structure=None):
     return description
 
 def preprocess_data_jv_mp(args):
+    selected_samples = ["JVASP-1151"]
+    words_index = [2,10]
+
     dat = data('dft_3d')
     dd = []
     if args.label:

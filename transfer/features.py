@@ -40,12 +40,12 @@ props_mb = [
 
 parser = argparse.ArgumentParser(description='run ml regressors on dataset')
 parser.add_argument('--database', help='the source database of the property dataset', default="matbench", type=str, required=False)
-parser.add_argument('--input_dir', help='input data directory', default="./data/embeddings", type=str,required=False)   # For text embeddings
+parser.add_argument('--input_dir', help='input text data directory', default="../text/matbench_jdft2d", type=str,required=False)   # For text embeddings
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'], default='robo', type=str, required=False)
 parser.add_argument('--llm', help='pre-trained llm to use', default='gpt2', type=str,required=False)
 parser.add_argument('--save_data', action='store_true')
 parser.add_argument('--gnn_only', action='store_true')
-parser.add_argument('--gnn_file_path', type=str, required=False)
+parser.add_argument('--gnn_file_path', help='pretrained gnn embedding directory', default="../alignn/embed_matbench_jdft2d/fold_0/xyz", type=str, required=False)
 parser.add_argument('--split_dir', type=str, required=False)
 parser.add_argument('--sample', action='store_true')
 parser.add_argument('--skip_sentence', help='skip the ith sentence', default=None, required=False)
@@ -193,9 +193,9 @@ def prepare_dataset_mb(args, prop):
 
     if len(embed_file)>1:
         if args.skip_sentence is None and args.mask_words is None:
-            pattern_str = rf".*embeddings_{args.llm.replace('/', '_')}_{args.text}_(\d+)"
+            pattern_str = rf".*embeddings_{args.llm.replace('/', '_')}_{args.text}_(\d+)"   # "(\d+)" matches a sequence of digits
             pattern = re.compile(pattern_str)
-            embed_file = [file for file in embed_file if pattern.match(file)]
+            embed_file = [file for file in embed_file if pattern.match(file) and "cluster" not in file]
         latest_file = max(embed_file, key=os.path.getctime)
         print("Latest file:", latest_file)
         embed_file = [latest_file]
@@ -219,16 +219,16 @@ def prepare_dataset_mb(args, prop):
     num_cols = len(embeddings[0])
     col_names = [i for i in range(num_cols)]    # cols for text embeddings
     df_data = pd.DataFrame(embeddings, columns=col_names)
-    df_data[prop] = labels
+    df_data["target"] = labels
     df_data["ids"] = ids
     if args.gnn_only:
-        dataset_filename = f"dataset_only_prop_{prop}"
+        dataset_filename = f"dataset_alignn_only_prop_{prop}"
     else:
-        dataset_filename = f"dataset_{args.llm.replace('/', '_')}_{args.text}_prop_{prop}"
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_prop_{prop}"
     if args.skip_sentence is not None:
-        dataset_filename = f"dataset_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_prop_{prop}"
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_prop_{prop}"
     if args.mask_words is not None:
-        dataset_filename = f"dataset_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}_prop_{prop}"
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}_prop_{prop}"
 
     # 5. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
     data_save_dir = f"./data/{prop}"
@@ -242,51 +242,55 @@ def prepare_dataset_mb(args, prop):
         0: first  entry of gnn embedding vector
         1: second entry of gnn embedding vector
         ...
-    """
+    """  
+    df_gnn = pd.read_csv(args.gnn_file_path)
+    ### Merge the data
+    df_data = df_data.loc[:, df_data.columns != "target"]      # remove target from text embedding df
+    df_data = df_data.merge(df_gnn, how='inner', left_on="ids", right_on="id", suffixes=('_lm', '_gnn'))
+    print(df_data.head())
+    df_data["target"] = df_data.pop("target")       # Reordering columns, "matbench_PROP" to the last col
+    df_data["ids"] = df_data.pop("ids")     # Reordering columns, "ids" to the last col
+    ### Save the merged data
+    logging.info(f"Constructed {df_data.shape[0]} samples for {prop} property")
+    df_data.to_csv(f"{dataset_path}.csv")
+    logging.info(f"Saved dataset to {dataset_path}.csv")
+
+
+    # 6. Multimodal feature concat for different splits
+    # TODO: Process split-specific merging
+    gnn_file_dir = os.path.dirname(args.gnn_file_path)      # direct parent dir of the gnn embedding file
+    split_dirs = find_subdirs_with_string(gnn_file_dir, "split_fold")       # Find matching subdirs with "split_fold" in name
+    for split_dir in split_dirs:
+
+        split_name = os.path.basename(split_dir)
+        split_data_save_dir = os.path.join(data_save_dir, split_name)
+        if not os.path.exists(split_data_save_dir):
+            os.makedirs(split_data_save_dir)
+
+        for subset in ["train", "val", "test"]:
+            df_subset = pd.read_csv(os.path.join(split_dir, f"data_{subset}.csv"))
+            subset_ids = list(df_subset["id"])
+            ### Filter merged df_data down to only relevant ids of this subset
+            df_data_subset = df_data[df_data["ids"].isin(subset_ids)]
+            ### Save the subset of merged multimodal data
+            df_data_subset.to_csv(os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv"))
+            logging.info(f"Saved subset dataset to {os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")}")
     
-    if args.gnn_file_path:    
-        df_gnn = pd.read_csv(args.gnn_file_path)
-        dataset_path = dataset_path.replace("dataset_", "dataset_alignn_")
-        if args.gnn_only:
-            df_gnn = pd.read_csv(args.gnn_file_path)
-            df_data = df_data[[prop, "ids"]].merge(df_gnn, how='inner', left_on="ids", right_on="id", suffixes=('_lm', '_gnn'))
-
-        else:
-            df_data = df_data.merge(df_gnn, how='inner', left_on="ids", right_on="id", suffixes=('_lm', '_gnn'))
-            print(df_data.head())
-        df_data[prop] = df_data.pop(prop)       # Reordering columns, "matbench_PROP" to the last col
-        df_data["ids"] = df_data.pop("ids")     # Reordering columns, "ids" to the last col
-
-    # TODO: Specify train test splits with pre_saved split ids
-    if args.split_dir:
-        split_path = os.path.join(args.split_dir, f"dataset_split_{prop}.json")
-        assert prop in split_path
-        # for subset in ["test", "val", "train"]:
-        #     sub_filename = f"{dataset_filename}_{subset}.csv"
-        #     df_sub = pd.read_csv(os.path.join(args.split_dir, sub_filename))
-        #     df_sub['ids'] = df_sub['ids'] + '.vasp'
-        #     df_datasub = df_data[df_data["ids"].isin(df_sub["ids"])].drop(columns={"jid", "jid.1"})
-        #     df_datasub.to_csv(f"{dataset_path}_{subset}.csv")
-        #     logging.info(f"Saved {subset} dataset to {dataset_path}_{subset}.csv")
-        with open(split_path, 'r') as json_file:
-            split_dic = json.load(json_file)
-        for subset in ["test", "val", "train"]:
-            sub_ids = [val+'.vasp' for val in split_dic[f"id_{subset}"]]
-            if not set(sub_ids).issubset(df_data['ids']):
-                logging.error(f"Subset {subset} not found in GNN or LLM embedding dataset for {prop} property. Skipping...")
-                return None, None
-            df_datasub = df_data[df_data['ids'].isin(sub_ids)].drop(columns={"id", "full"}, errors='ignore')
-            df_datasub.to_csv(f"{dataset_path}_{subset}.csv")
-            print(f"{dataset_path}_{subset}: {len(df_datasub)}")
-            logging.info(f"Saved {subset} dataset to {dataset_path}_{subset}.csv")
-    
-    else:
-        logging.info(f"Constructed {df_data.shape[0]} samples for {prop} property")
-        df_data.to_csv(f"{dataset_path}.csv")
-        logging.info(f"Saved dataset to {dataset_path}.csv")
-
 
     return embeddings, labels
+
+
+
+def find_subdirs_with_string(directory, search_str):
+    """
+    Find all subdirs that contain search_str, for a given directory
+    """
+    matching_subdirs = []
+    for root, dirs, _ in os.walk(directory):
+        for subdir in dirs:
+            if search_str in subdir:
+                matching_subdirs.append(os.path.join(root, subdir))
+    return matching_subdirs
 
 
 if __name__ == "__main__":
