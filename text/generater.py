@@ -316,6 +316,6 @@ if __name__ == "__main__":
         main_mb(args)
     elif args.database == "zeo":
         main_zeo(args)
-    elif args.database == "jarvis" or "mp":
+    elif args.database == "jarvis" or args.database == "mp":
         main_jv_mp(args)
     logging.info(f"Finished generate text")

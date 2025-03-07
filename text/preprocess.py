@@ -469,7 +469,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO) 
     if args.database == "matbench":
         preprocess_data_mb(args)
-    elif args.database == "jarvis" or "mp":
+    elif args.database == "jarvis" or args.database == "mp":
         preprocess_data_jv_mp(args)
     logging.info(f"Finished generate embeddings")
     
