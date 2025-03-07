@@ -45,7 +45,7 @@ parser.add_argument('--text', help='text sources for sample', choices=['raw', 'c
 parser.add_argument('--llm', help='pre-trained llm to use', default='gpt2', type=str,required=False)
 parser.add_argument('--save_data', action='store_true')
 parser.add_argument('--gnn_only', action='store_true')
-parser.add_argument('--gnn_file_path', help='pretrained gnn embedding directory', default="../alignn/embed_matbench_jdft2d/fold_0/xyz", type=str, required=False)
+parser.add_argument('--gnn_file_path', help='pretrained gnn embedding directory', default="../alignn/embed_matbench_jdft2d/fold_0/xyz/data_final_9_9_5.csv", type=str, required=False)
 parser.add_argument('--split_dir', type=str, required=False)
 parser.add_argument('--sample', action='store_true')
 parser.add_argument('--skip_sentence', help='skip the ith sentence', default=None, required=False)
@@ -206,9 +206,6 @@ def prepare_dataset_mb(args, prop):
 
     # 3. Match text embeddings with id and target (as in id_prop.csv)
     for jid, row in tqdm(df_embed.iterrows(), total=len(df_embed), desc="Matching id, target and text embeddings"):
-        if args.sample:
-            if jid not in selected_samples:
-                continue
         if row["target"]!='na':
             if jid in df_id_prop.index:
                 embeddings.append(row.values)
