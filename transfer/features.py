@@ -231,6 +231,8 @@ def prepare_dataset_mb(args, prop):
                 print(df_subset.head())
                 df_subset["target"] = df_subset.pop("target")       # Reordering columns, "matbench_PROP" to the last col
                 df_subset["ids"] = df_subset.pop("ids")     # Reordering columns, "ids" to the last col
+                df_subset["id"] = df_subset.pop("id")     # Reordering columns, "id" to the last col
+                df_subset.drop(df_subset.filter(like='Unnamed').columns, axis=1)
                 ### Save the subset of merged multimodal data
                 save_path = os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")
                 df_subset.to_csv(save_path)
