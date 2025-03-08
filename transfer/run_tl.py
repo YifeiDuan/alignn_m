@@ -49,6 +49,7 @@ parser.add_argument('--prop', help="specify property from \
                     'matbench_mp_e_form',\
                     'matbench_mp_gap',\
                     'matbench_mp_is_metal'", default='matbench_jdft2d', required=False)
+parser.add_argument('--model', help='model to train', choices=['rf', 'mlp'], default='mlp', type=str, required=False)
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo'], default='raw', type=str, required=False)
 parser.add_argument('--llm', help='pre-trained llm embedding to use', default='matbert-base-cased', type=str,required=False)
 parser.add_argument('--gnn', help='pre-trained gnn embedding to use', default='alignn', type=str,required=False)
