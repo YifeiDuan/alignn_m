@@ -140,7 +140,7 @@ def feat_prep(
 
 
 def split_combined_feat(
-        dataset = ["matbench_jdft2d"],
+        dataset = "matbench_jdft2d",
         model_fold = 0,
         feat_dir = "../"
     ):
@@ -159,7 +159,7 @@ def split_combined_feat(
     """
     mb = MatbenchBenchmark(
         autoload=False,
-        subset=dataset,
+        subset=[dataset],
     )
     feat_path = os.path.join(feat_dir, f"embed_{dataset}/fold_{model_fold}")
 
@@ -185,4 +185,3 @@ def split_combined_feat(
             data_xyz_train.to_csv(f"{save_dir}/data_train.csv")
             data_xyz_val.to_csv(f"{save_dir}/data_val.csv")
             data_xyz_test.to_csv(f"{save_dir}/data_test.csv")
-
