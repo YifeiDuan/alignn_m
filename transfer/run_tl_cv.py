@@ -117,7 +117,7 @@ def run_regressor_cv_rf(args):
             print(f"Best Hyperparams: {best_params}, Val MAE: {best_score}")
             ### 3.1 Process save_dir name
             if len(splits_dirs) != 0:
-                split_name = os.path.basename(data_dir)
+                split_name = os.path.basename(data_subdir)
                 save_dir = os.path.join(args.output_dir, f"{prop}_{split_name}")
             else:
                 save_dir = os.path.join(args.output_dir, prop)
@@ -216,7 +216,7 @@ def run_regressor_cv_mlp(args):
             print(f"Best Hyperparams: {best_params}, Val MAE: {best_score}")
             ### 3.1 Process save_dir name
             if len(splits_dirs) != 0:
-                split_name = os.path.basename(data_dir)
+                split_name = os.path.basename(data_subdir)
                 save_dir = os.path.join(args.output_dir, f"{prop}_{split_name}")
             else:
                 save_dir = os.path.join(args.output_dir, prop)
