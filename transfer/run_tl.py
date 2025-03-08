@@ -93,11 +93,11 @@ def run_regressor_rf(args):
             df_val   = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_val.csv")).reset_index(drop=True)
             df_test  = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_test.csv")).reset_index(drop=True)
             ### 1.1 Separate X (input) and y (target)
-            X_train = df_train.drop(columns=["id", "ids", "target"], error="ignore")
+            X_train = df_train.drop(columns=["id", "ids", "target"], errors="ignore")
             y_train = df_train["target"]
-            X_val = df_val.drop(columns=["id", "ids", "target"], error="ignore")
+            X_val = df_val.drop(columns=["id", "ids", "target"], errors="ignore")
             y_val = df_val["target"]
-            X_test = df_test.drop(columns=["id", "ids", "target"], error="ignore")
+            X_test = df_test.drop(columns=["id", "ids", "target"], errors="ignore")
             y_test = df_test["target"]
 
             # 2. Model training with hyperparam tuning
@@ -197,11 +197,11 @@ def run_regressor_mlp(args):
             df_val   = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_val.csv")).reset_index(drop=True)
             df_test  = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_test.csv")).reset_index(drop=True)
             ### 1.1 Separate X (input) and y (target)
-            X_train = df_train.drop(columns=["id", "ids", "target"], error="ignore")
+            X_train = df_train.drop(columns=["id", "ids", "target"], errors="ignore")
             y_train = df_train["target"]
-            X_val = df_val.drop(columns=["id", "ids", "target"], error="ignore")
+            X_val = df_val.drop(columns=["id", "ids", "target"], errors="ignore")
             y_val = df_val["target"]
-            X_test = df_test.drop(columns=["id", "ids", "target"], error="ignore")
+            X_test = df_test.drop(columns=["id", "ids", "target"], errors="ignore")
             y_test = df_test["target"]
 
             # 2. Model training with hyperparam tuning
