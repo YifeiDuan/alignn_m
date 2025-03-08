@@ -150,8 +150,8 @@ def run_regressor_rf(args):
             print(f"Train MAE: {mae_train}")
             train_json = {
                 "ids": list(df_train["id"]),
-                "y_true": y_train,
-                "y_pred": y_train_pred,
+                "y_true": list(y_train),
+                "y_pred": list(y_train_pred),
                 "train_mae": mae_train
             }
             with open(os.path.join(save_dir, "rf_eval_train.json"), "w") as f:
@@ -162,8 +162,8 @@ def run_regressor_rf(args):
             print(f"Test MAE: {mae_test}")
             test_json = {
                 "ids": list(df_test["id"]),
-                "y_true": y_test,
-                "y_pred": y_test_pred,
+                "y_true": list(y_test),
+                "y_pred": list(y_test_pred),
                 "test_mae": mae_test
             }
             with open(os.path.join(save_dir, "rf_eval_test.json"), "w") as f:
@@ -263,8 +263,8 @@ def run_regressor_mlp(args):
             print(f"Train MAE: {mae_train}")
             train_json = {
                 "ids": list(df_train["id"]),
-                "y_true": y_train,
-                "y_pred": y_train_pred,
+                "y_true": list(y_train),
+                "y_pred": list(y_train_pred),
                 "train_mae": mae_train
             }
             with open(os.path.join(save_dir, "mlp_eval_train.json"), "w") as f:
@@ -275,8 +275,8 @@ def run_regressor_mlp(args):
             print(f"Test MAE: {mae_test}")
             test_json = {
                 "ids": list(df_test["id"]),
-                "y_true": y_test,
-                "y_pred": y_test_pred,
+                "y_true": list(y_test),
+                "y_pred": list(y_test_pred),
                 "test_mae": mae_test
             }
             with open(os.path.join(save_dir, "mlp_eval_test.json"), "w") as f:
