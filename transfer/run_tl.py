@@ -3,7 +3,8 @@
 import json
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import torch
 from jarvis.core.atoms import Atoms
@@ -19,70 +20,276 @@ import os
 import pandas as pd
 from collections import defaultdict
 import configparser
-from .features import prepare_dataset
+import itertools
 
 SEED = 1
-#props = ['ehull','mbj_bandgap', 'slme', 'spillage', 'magmom_outcar','formation_energy_peratom', 'Tc_supercon']
-props = ['ehull','mbj_bandgap', 'slme', 'spillage', 'magmom_outcar','formation_energy_peratom', 'Tc_supercon']
-
+# props = ['ehull','mbj_bandgap', 'slme', 'spillage', 'magmom_outcar','formation_energy_peratom', 'Tc_supercon']
+props_mb = [
+                "matbench_jdft2d",
+                "matbench_phonons",
+                "matbench_dielectric",
+                "matbench_log_gvrh",
+                "matbench_log_kvrh",
+                "matbench_perovskites",
+                "matbench_mp_e_form",
+                "matbench_mp_gap",
+                "matbench_mp_is_metal",
+            ]
 
 parser = argparse.ArgumentParser(description='run ml regressors on dataset')
 # parser.add_argument('--data_path', help='path to the dataset',default=None, type=str, required=False)
-parser.add_argument('--input_dir', help='input data directory', default="./data/embeddings", type=str,required=False)
-# parser.add_argument('--input', help='input attributes set', default=None, type=str, required=False)
+parser.add_argument('--input_dir', help='input data directory', default="./data", type=str,required=False)
+parser.add_argument('--prop', help="specify property from \
+                    'matbench_jdft2d',\
+                    'matbench_phonons',\
+                    'matbench_dielectric',\
+                    'matbench_log_gvrh',\
+                    'matbench_log_kvrh',\
+                    'matbench_perovskites',\
+                    'matbench_mp_e_form',\
+                    'matbench_mp_gap',\
+                    'matbench_mp_is_metal'", default='matbench_jdft2d', required=False)
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo'], default='raw', type=str, required=False)
-parser.add_argument('--llm', help='pre-trained llm to use', default='gpt2', type=str,required=False)
-parser.add_argument('--output_dir', help='path to the save output embedding', default=None, type=str, required=False)
-parser.add_argument('--label', help='target variable', default=None, type=str,required=False)
-parser.add_argument('--raw', action='store_true')
-parser.add_argument('--no_save', action='store_true')
-parser.add_argument('--save_data', action='store_true')
-parser.add_argument('--data_only', action='store_true')
+parser.add_argument('--llm', help='pre-trained llm embedding to use', default='matbert-base-cased', type=str,required=False)
+parser.add_argument('--gnn', help='pre-trained gnn embedding to use', default='alignn', type=str,required=False)
+parser.add_argument('--output_dir', help='path to the save output embedding', default="./results", type=str, required=False)
 args =  parser.parse_args()
-config = configparser.ConfigParser()
-config.read('config.ini')
 
+
+def find_subdirs_with_string(directory, search_str):
+    """
+    Find all subdirs that contain search_str, for a given directory
+    """
+    matching_subdirs = []
+    for root, dirs, _ in os.walk(directory):
+        for subdir in dirs:
+            if search_str in subdir:
+                matching_subdirs.append(os.path.join(root, subdir))
+    return matching_subdirs
 
 
 
    
 # Main function
 def run_regressor_rf(args):
-    global props
-    if args.label:
-        props = [args.label] #'formation_energy_peratom'#'exfoliation_energy'
-    result = defaultdict(list)
+    if args.prop != "all":
+        props = [args.prop]
+    else:
+        props = props_mb
     for prop in props:
-        X, y = prepare_dataset(args, prop)
-        if args.data_only:
-            continue
-        # Split the data into training and testing sets
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=SEED)
+        # 0. Process data dir path strings
+        data_dir = os.path.join(args.input_dir, prop)
+        splits_dirs = find_subdirs_with_string(data_dir, "split_fold")
+        data_subdirs = None
+        if len(splits_dirs) != 0:
+            data_subdirs = splits_dirs
+        else:
+            data_subdirs = [data_dir]
+        for data_subdir in data_subdirs:    # data_subdir contains a train-val-test split
+            # 1. Get preprocessed train, val, test data for the dataset (might be a fold)
+            df_base_name = f"dataset_{args.gnn}_{args.llm}_{args.text}_prop_{prop}"
+            df_train = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_train.csv")).reset_index(drop=True)
+            df_val   = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_val.csv")).reset_index(drop=True)
+            df_test  = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_test.csv")).reset_index(drop=True)
+            ### 1.1 Separate X (input) and y (target)
+            X_train = df_train.drop(columns=["id", "ids", "target"], error="ignore")
+            y_train = df_train["target"]
+            X_val = df_val.drop(columns=["id", "ids", "target"], error="ignore")
+            y_val = df_val["target"]
+            X_test = df_test.drop(columns=["id", "ids", "target"], error="ignore")
+            y_test = df_test["target"]
 
-        # Initialize and fit a linear regression model
-        logging.info(f"Started fitting to model")
-        regression_model = RandomForestRegressor(n_jobs = 16, n_estimators = 1000) #LinearRegression()
-        regression_model.fit(X_train, y_train)
+            # 2. Model training with hyperparam tuning
+            ### 2.1 Prepare hyperparams
+            param_grid = {
+                'n_estimators': [50, 100, 200, 500, 1000],
+                'max_depth': [None, 10, 20],
+                'min_samples_split': [2, 5, 10],
+                'min_samples_leaf': [1, 2, 4]
+            }
+            param_combinations = list(itertools.product(*param_grid.values()))
+            param_names = list(param_grid.keys())
+            ### 2.2 Training with validation
+            best_params = None
+            best_model = None
+            best_score = float('inf')
+            for params in param_combinations:
+                ### 2.3 Loop through each combination
+                param_dict = dict(zip(param_names, params))
+                rf = RandomForestRegressor(**param_dict, random_state=42)
+                rf.fit(X_train, y_train)
+                ### 2.4 Evaluate on the validation set
+                y_val_pred = rf.predict(X_val)
+                mae = mean_absolute_error(y_val, y_val_pred)
+                print(f"Params: {param_dict}, Val MAE: {mae}")
+                ### 2.5 Track and update the best performing parameters
+                if mae < best_score:
+                    best_score = mae
+                    best_params = param_dict
+                    best_model = rf
 
-        # Predict using the test set
-        y_pred = regression_model.predict(X_test)
+            # 3. Save best model
+            print(f"Best Hyperparams: {best_params}, Val MAE: {best_score}")
+            ### 3.1 Process save_dir name
+            if len(splits_dirs) != 0:
+                split_name = os.path.basename(data_dir)
+                save_dir = os.path.join(args.output_dir, f"{prop}_{split_name}")
+            else:
+                save_dir = os.path.join(args.output_dir, prop)
+            ### 3.2 Save model params
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            model_dict = {
+                            "hyperparameters": best_params,
+                            "val_mae": best_score
+            }
+            with open(os.path.join(save_dir, "rf_best_params.json"), "w") as f:
+                json.dump(model_dict, f, indent=4)
+            
+            # 4. Evaluate best model on data splits
+            ### 4.1 Train set
+            y_train_pred = best_model.predict(X_train)
+            mae_train = mean_absolute_error(y_train, y_train_pred)
+            print(f"Train MAE: {mae_train}")
+            train_json = {
+                "ids": list(df_train[id]),
+                "y_true": y_train,
+                "y_pred": y_train_pred,
+                "train_mae": mae_train
+            }
+            with open(os.path.join(save_dir, "rf_eval_train.json"), "w") as f:
+                json.dump(train_json, f, indent=4)
+            ### 4.2 Test set
+            y_test_pred = best_model.predict(X_test)
+            mae_test = mean_absolute_error(y_test, y_test_pred)
+            print(f"Test MAE: {mae_test}")
+            test_json = {
+                "ids": list(df_test[id]),
+                "y_true": y_test,
+                "y_pred": y_test_pred,
+                "test_mae": mae_test
+            }
+            with open(os.path.join(save_dir, "rf_eval_test.json"), "w") as f:
+                json.dump(test_json, f, indent=4)
 
-        # Evaluate the model
-        mse = mean_squared_error(y_test, y_pred)
-        mae = mean_absolute_error(y_test, y_pred)
-        logging.info(f"{prop}: mean_absolute_error: {mae}")
-        # plt.plot(y_test, y_pred,'.')
-        # plt.savefig('plot.png')
-        # plt.close()
-        logging.info(f"{prop}: Mean Squared Error: {mse}")
-        result['prop'].append(prop)
-        result['mae'].append(mae)
-        result['mse'].append(mse)
-        df_pred = pd.DataFrame({'labels': y_test, 'predictions': y_pred})
-        if not args.no_save:
-            df_pred.to_csv(f"./pred/rf_{args.llm.replace('/','_')}_{args.text}_{prop}.csv")
-    df_rst = pd.DataFrame.from_dict(result)
-    return df_rst
+
+
+
+def run_regressor_mlp(args):
+    if args.prop != "all":
+        props = [args.prop]
+    else:
+        props = props_mb
+    for prop in props:
+        # 0. Process data dir path strings
+        data_dir = os.path.join(args.input_dir, prop)
+        splits_dirs = find_subdirs_with_string(data_dir, "split_fold")
+        data_subdirs = None
+        if len(splits_dirs) != 0:
+            data_subdirs = splits_dirs
+        else:
+            data_subdirs = [data_dir]
+        for data_subdir in data_subdirs:    # data_subdir contains a train-val-test split
+            # 1. Get preprocessed train, val, test data for the dataset (might be a fold)
+            df_base_name = f"dataset_{args.gnn}_{args.llm}_{args.text}_prop_{prop}"
+            df_train = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_train.csv")).reset_index(drop=True)
+            df_val   = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_val.csv")).reset_index(drop=True)
+            df_test  = pd.read_csv(os.path.join(data_subdir, f"{df_base_name}_test.csv")).reset_index(drop=True)
+            ### 1.1 Separate X (input) and y (target)
+            X_train = df_train.drop(columns=["id", "ids", "target"], error="ignore")
+            y_train = df_train["target"]
+            X_val = df_val.drop(columns=["id", "ids", "target"], error="ignore")
+            y_val = df_val["target"]
+            X_test = df_test.drop(columns=["id", "ids", "target"], error="ignore")
+            y_test = df_test["target"]
+
+            # 2. Model training with hyperparam tuning
+            ### 2.1 Prepare hyperparams
+            param_grid = {
+                'hidden_layer_sizes': [
+                    (1024,),  # Single large layer
+                    (1024, 512),  # Two-layer decreasing
+                    (1024, 512, 256),  # Three-layer decreasing
+                    (1024, 512, 256, 128),  # Deeper but still decreasing
+                    (512,),  # Moderate single-layer model
+                    (512, 256),  # Two-layer moderate
+                    (512, 256, 128),  # Three-layer moderate
+                ],  
+                'activation': ['relu', 'tanh'],  
+                'solver': ['adam', 'sgd'],  
+                'alpha': [0.0001, 0.001, 0.01, 0.1],  
+                'learning_rate': ['constant', 'adaptive'],  
+                'learning_rate_init': [0.0001, 0.001, 0.01],
+                'max_iter': [200, 500, 1000]  # Number of iterations
+            }
+            param_combinations = list(itertools.product(*param_grid.values()))
+            param_names = list(param_grid.keys())
+            ### 2.2 Training with validation
+            best_params = None
+            best_model = None
+            best_score = float('inf')
+            for params in param_combinations:
+                ### 2.3 Loop through each combination
+                param_dict = dict(zip(param_names, params))
+                mlp = MLPRegressor(**param_dict, random_state=42)
+                mlp.fit(X_train, y_train)
+                ### 2.4 Evaluate on the validation set
+                y_val_pred = mlp.predict(X_val)
+                mae = mean_absolute_error(y_val, y_val_pred)
+                print(f"Params: {param_dict}, Val MAE: {mae}")
+                ### 2.5 Track and update the best performing parameters
+                if mae < best_score:
+                    best_score = mae
+                    best_params = param_dict
+                    best_model = mlp
+
+            # 3. Save best model
+            print(f"Best Hyperparams: {best_params}, Val MAE: {best_score}")
+            ### 3.1 Process save_dir name
+            if len(splits_dirs) != 0:
+                split_name = os.path.basename(data_dir)
+                save_dir = os.path.join(args.output_dir, f"{prop}_{split_name}")
+            else:
+                save_dir = os.path.join(args.output_dir, prop)
+            ### 3.2 Save model params
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            model_dict = {
+                            "hyperparameters": best_params,
+                            "weights": [w.tolist() for w in best_model.coefs_],  # Convert NumPy arrays to lists
+                            "biases": [b.tolist() for b in best_model.intercepts_],  # Convert NumPy arrays to lists
+                            "val_mae": best_score
+            }
+            with open(os.path.join(save_dir, "mlp_best_params.json"), "w") as f:
+                json.dump(model_dict, f, indent=4)
+            
+            # 4. Evaluate best model on data splits
+            ### 4.1 Train set
+            y_train_pred = best_model.predict(X_train)
+            mae_train = mean_absolute_error(y_train, y_train_pred)
+            print(f"Train MAE: {mae_train}")
+            train_json = {
+                "ids": list(df_train[id]),
+                "y_true": y_train,
+                "y_pred": y_train_pred,
+                "train_mae": mae_train
+            }
+            with open(os.path.join(save_dir, "mlp_eval_train.json"), "w") as f:
+                json.dump(train_json, f, indent=4)
+            ### 4.2 Test set
+            y_test_pred = best_model.predict(X_test)
+            mae_test = mean_absolute_error(y_test, y_test_pred)
+            print(f"Test MAE: {mae_test}")
+            test_json = {
+                "ids": list(df_test[id]),
+                "y_true": y_test,
+                "y_pred": y_test_pred,
+                "test_mae": mae_test
+            }
+            with open(os.path.join(save_dir, "mlp_eval_test.json"), "w") as f:
+                json.dump(test_json, f, indent=4)
+
+            
 
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S') 
@@ -90,10 +297,5 @@ if __name__ == "__main__":
         df_rst = run_regressor_rf(args)
     elif args.model == "mlp":
         df_rst = run_regressor_mlp(args)
-    filtered_str = '' if args.raw else '_filtered'
-    output_csv = f"rf_{args.llm.replace('/','_')}_{args.text}_prop_{len(props)}_{filtered_str}.csv"
-    if args.output_dir:
-        output_csv = os.path.join(args.output_dir, output_csv)
-    if not args.no_save:
-        df_rst.to_csv(output_csv)
+   
 

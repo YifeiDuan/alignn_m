@@ -257,22 +257,23 @@ def prepare_dataset_mb(args, prop):
     # TODO: Process split-specific merging
     gnn_file_dir = os.path.dirname(args.gnn_file_path)      # direct parent dir of the gnn embedding file
     split_dirs = find_subdirs_with_string(gnn_file_dir, "split_fold")       # Find matching subdirs with "split_fold" in name
-    for split_dir in split_dirs:
+    if len(split_dirs) != 0:
+        for split_dir in split_dirs:
 
-        split_name = os.path.basename(split_dir)
-        split_data_save_dir = os.path.join(data_save_dir, split_name)
-        if not os.path.exists(split_data_save_dir):
-            os.makedirs(split_data_save_dir)
+            split_name = os.path.basename(split_dir)
+            split_data_save_dir = os.path.join(data_save_dir, split_name)
+            if not os.path.exists(split_data_save_dir):
+                os.makedirs(split_data_save_dir)
 
-        for subset in ["train", "val", "test"]:
-            df_subset = pd.read_csv(os.path.join(split_dir, f"data_{subset}.csv"))
-            subset_ids = list(df_subset["id"])
-            ### Filter merged df_data down to only relevant ids of this subset
-            df_data_subset = df_data[df_data["ids"].isin(subset_ids)]
-            ### Save the subset of merged multimodal data
-            save_path = os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")
-            df_data_subset.to_csv(save_path)
-            logging.info(f"Saved subset dataset to {save_path}")
+            for subset in ["train", "val", "test"]:
+                df_subset = pd.read_csv(os.path.join(split_dir, f"data_{subset}.csv"))
+                subset_ids = list(df_subset["id"])
+                ### Filter merged df_data down to only relevant ids of this subset
+                df_data_subset = df_data[df_data["ids"].isin(subset_ids)]
+                ### Save the subset of merged multimodal data
+                save_path = os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")
+                df_data_subset.to_csv(save_path)
+                logging.info(f"Saved subset dataset to {save_path}")
     
 
     return embeddings, labels
