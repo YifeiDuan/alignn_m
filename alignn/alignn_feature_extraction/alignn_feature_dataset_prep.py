@@ -3,6 +3,8 @@ import pandas as pd
 import os
 import glob
 
+import shutil
+
 from matbench.bench import MatbenchBenchmark
 
 def feat_prep(
@@ -185,3 +187,17 @@ def split_combined_feat(
             data_xyz_train.to_csv(f"{save_dir}/data_train.csv")
             data_xyz_val.to_csv(f"{save_dir}/data_val.csv")
             data_xyz_test.to_csv(f"{save_dir}/data_test.csv")
+
+
+def organize_files(
+    dataset = "matbench_jdft2d",
+    feat_dir = "../"
+):
+    prop_feat_dir = os.path.join(feat_dir, f"embed_{dataset}")
+    output_dir = os.path.join(prop_feat_dir, "organized")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    for fold in range(5):
+        input_files = os.path.join(prop_feat_dir, f"fold_{fold}/xyz/split_fold_{fold}")
+        output_files = os.path.join(output_dir, f"split_fold_{fold}")
+        shutil.copytree(input_files, output_files)

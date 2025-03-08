@@ -171,8 +171,14 @@ def prepare_dataset_jv_mp(args, prop):
     return embeddings, labels
 
 def prepare_dataset_mb(args, prop):
+    embeddings = [] # text embeddings as numpy arrays
+    labels = []     # property target values
+    ids = []        # jids, e.g. matbench-idft2d-001
 
-    # 1. Load text embeddings
+    # 1. Load id_prop.csv
+    df_id_prop = pd.read_csv(os.path.join(args.input_dir, "id_prop_all.csv"), index_col="id")
+
+    # 2. Load text embeddings
     text_embed_subdir = f"embedding_*"
     file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_*.csv"
     if args.skip_sentence is not None:
@@ -195,9 +201,23 @@ def prepare_dataset_mb(args, prop):
         embed_file = [latest_file]
     
     logging.info(f"Found embedding file: {embed_file}")
-    df_embed = pd.read_csv(embed_file[0], index_col = 0).reset_index().rename(columns={'index': 'ids'})
+    df_embed = pd.read_csv(embed_file[0], index_col = 0)
 
-    # 2. Prepare save names
+
+    # 3. Match text embeddings with id and target (as in id_prop.csv)
+    for jid, row in tqdm(df_id_prop.iterrows(), total=len(df_id_prop), desc="Matching id, target and text embeddings"):
+        if row["target"]!='na':
+            if jid in df_embed.index:
+                embeddings.append(df_embed.loc[jid].values)
+                labels.append(row["target"])
+                ids.append(jid)
+    
+    # 4. Merge text emebddings with ids and targets into a df
+    num_cols = len(embeddings[0])
+    col_names = [i for i in range(num_cols)]    # cols for text embeddings
+    df_data = pd.DataFrame(embeddings, columns=col_names)
+    df_data["target"] = labels
+    df_data["ids"] = ids
     if args.gnn_only:
         dataset_filename = f"dataset_alignn_only_prop_{prop}"
     else:
@@ -207,14 +227,35 @@ def prepare_dataset_mb(args, prop):
     if args.mask_words is not None:
         dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}_prop_{prop}"
 
-    # 3. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
+    # 5. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
     data_save_dir = f"./data/{prop}"
     if not os.path.exists(data_save_dir):
         os.makedirs(data_save_dir)
+    dataset_path = f"{data_save_dir}/{dataset_filename}"
+    # TODO: ALIGNN features, needs to first process x, y, z into ONE single dataset
+    """
+    df_gnn should have the columns:
+        id: e.g. mb-jdft2d-001
+        0: first  entry of gnn embedding vector
+        1: second entry of gnn embedding vector
+        ...
+    """  
+    df_gnn = pd.read_csv(args.gnn_file_path)
+    ### Merge the data
+    df_data = df_data.loc[:, df_data.columns != "target"]      # remove target from text embedding df
+    df_data = df_data.merge(df_gnn, how='inner', left_on="ids", right_on="id", suffixes=('_lm', '_gnn'))
+    print(df_data.head())
+    df_data["target"] = df_data.pop("target")       # Reordering columns, "matbench_PROP" to the last col
+    df_data["ids"] = df_data.pop("ids")     # Reordering columns, "ids" to the last col
+    ### Save the merged data
+    logging.info(f"Constructed {df_data.shape[0]} samples for {prop} property")
+    df_data.to_csv(f"{dataset_path}.csv")
+    logging.info(f"Saved dataset to {dataset_path}.csv")
 
+
+    # 6. Multimodal feature concat for different splits
     # TODO: Process split-specific merging
-    if args.gnn_file_dir:
-        gnn_file_dir = args.gnn_file_dir      # direct parent dir of the gnn embedding file
+    gnn_file_dir = os.path.dirname(args.gnn_file_path)      # direct parent dir of the gnn embedding file
     split_dirs = find_subdirs_with_string(gnn_file_dir, "split_fold")       # Find matching subdirs with "split_fold" in name
     if len(split_dirs) != 0:
         for split_dir in split_dirs:
@@ -226,15 +267,16 @@ def prepare_dataset_mb(args, prop):
 
             for subset in ["train", "val", "test"]:
                 df_subset = pd.read_csv(os.path.join(split_dir, f"data_{subset}.csv"))
-                df_subset = df_subset.merge(df_embed, how='inner', left_on="id", right_on="ids", suffixes=('_gnn', '_lm'))
-                print(df_subset.head())
-                df_subset["target"] = df_subset.pop("target")       # Reordering columns, "matbench_PROP" to the last col
-                df_subset["ids"] = df_subset.pop("ids")     # Reordering columns, "ids" to the last col
+                subset_ids = list(df_subset["id"])
+                ### Filter merged df_data down to only relevant ids of this subset
+                df_data_subset = df_data[df_data["ids"].isin(subset_ids)]
                 ### Save the subset of merged multimodal data
                 save_path = os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")
-                df_subset.to_csv(save_path)
+                df_data_subset.to_csv(save_path)
                 logging.info(f"Saved subset dataset to {save_path}")
     
+
+    return embeddings, labels
 
 
 
