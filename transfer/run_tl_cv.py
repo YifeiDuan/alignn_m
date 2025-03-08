@@ -107,7 +107,7 @@ def run_regressor_cv_rf(args):
             }
             ### 2.2 Train
             grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, 
-                           cv=5, n_jobs=-1, scoring='neg_mean_absolute_error', verbose=2)
+                           cv=5, n_jobs=-1, scoring='neg_mean_absolute_error', verbose=3)
             grid_search.fit(X_train, y_train)
 
             # 3. Save best model
@@ -137,7 +137,7 @@ def run_regressor_cv_rf(args):
             mae_train = mean_absolute_error(y_train, y_train_pred)
             print(f"Train MAE: {mae_train}")
             train_json = {
-                "ids": list(df_train[id]),
+                "ids": list(df_train["id"]),
                 "y_true": y_train,
                 "y_pred": y_train_pred,
                 "train_mae": mae_train
@@ -149,7 +149,7 @@ def run_regressor_cv_rf(args):
             mae_test = mean_absolute_error(y_test, y_test_pred)
             print(f"Test MAE: {mae_test}")
             test_json = {
-                "ids": list(df_test[id]),
+                "ids": list(df_test["id"]),
                 "y_true": y_test,
                 "y_pred": y_test_pred,
                 "test_mae": mae_test
@@ -206,7 +206,7 @@ def run_regressor_cv_mlp(args):
             }
             ### 2.2 Train
             grid_search = GridSearchCV(estimator=mlp, param_grid=param_grid, 
-                           cv=5, n_jobs=-1, scoring='neg_mean_absolute_error', verbose=2)
+                           cv=5, n_jobs=-1, scoring='neg_mean_absolute_error', verbose=3)
             grid_search.fit(X_train, y_train)
 
             # 3. Save best model
@@ -238,7 +238,7 @@ def run_regressor_cv_mlp(args):
             mae_train = mean_absolute_error(y_train, y_train_pred)
             print(f"Train MAE: {mae_train}")
             train_json = {
-                "ids": list(df_train[id]),
+                "ids": list(df_train["id"]),
                 "y_true": y_train,
                 "y_pred": y_train_pred,
                 "train_mae": mae_train
@@ -250,7 +250,7 @@ def run_regressor_cv_mlp(args):
             mae_test = mean_absolute_error(y_test, y_test_pred)
             print(f"Test MAE: {mae_test}")
             test_json = {
-                "ids": list(df_test[id]),
+                "ids": list(df_test["id"]),
                 "y_true": y_test,
                 "y_pred": y_test_pred,
                 "test_mae": mae_test

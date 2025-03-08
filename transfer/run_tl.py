@@ -102,9 +102,7 @@ def run_regressor_rf(args):
             ### 2.1 Prepare hyperparams
             param_grid = {
                 'n_estimators': [50, 100, 200, 500, 1000],
-                'max_depth': [None, 10, 20],
-                'min_samples_split': [2, 5, 10],
-                'min_samples_leaf': [1, 2, 4]
+                'max_depth': [None, 10, 20]
             }
             param_combinations = list(itertools.product(*param_grid.values()))
             param_names = list(param_grid.keys())
@@ -151,7 +149,7 @@ def run_regressor_rf(args):
             mae_train = mean_absolute_error(y_train, y_train_pred)
             print(f"Train MAE: {mae_train}")
             train_json = {
-                "ids": list(df_train[id]),
+                "ids": list(df_train["id"]),
                 "y_true": y_train,
                 "y_pred": y_train_pred,
                 "train_mae": mae_train
@@ -163,7 +161,7 @@ def run_regressor_rf(args):
             mae_test = mean_absolute_error(y_test, y_test_pred)
             print(f"Test MAE: {mae_test}")
             test_json = {
-                "ids": list(df_test[id]),
+                "ids": list(df_test["id"]),
                 "y_true": y_test,
                 "y_pred": y_test_pred,
                 "test_mae": mae_test
@@ -214,12 +212,8 @@ def run_regressor_mlp(args):
                     (512, 256),  # Two-layer moderate
                     (512, 256, 128),  # Three-layer moderate
                 ],  
-                'activation': ['relu', 'tanh'],  
-                'solver': ['adam', 'sgd'],  
-                'alpha': [0.0001, 0.001, 0.01, 0.1],  
-                'learning_rate': ['constant', 'adaptive'],  
                 'learning_rate_init': [0.0001, 0.001, 0.01],
-                'max_iter': [200, 500, 1000]  # Number of iterations
+                'max_iter': [200, 500]  # Number of iterations
             }
             param_combinations = list(itertools.product(*param_grid.values()))
             param_names = list(param_grid.keys())
@@ -268,7 +262,7 @@ def run_regressor_mlp(args):
             mae_train = mean_absolute_error(y_train, y_train_pred)
             print(f"Train MAE: {mae_train}")
             train_json = {
-                "ids": list(df_train[id]),
+                "ids": list(df_train["id"]),
                 "y_true": y_train,
                 "y_pred": y_train_pred,
                 "train_mae": mae_train
@@ -280,7 +274,7 @@ def run_regressor_mlp(args):
             mae_test = mean_absolute_error(y_test, y_test_pred)
             print(f"Test MAE: {mae_test}")
             test_json = {
-                "ids": list(df_test[id]),
+                "ids": list(df_test["id"]),
                 "y_true": y_test,
                 "y_pred": y_test_pred,
                 "test_mae": mae_test
