@@ -202,7 +202,7 @@ def run_regressor_cv_mlp(args):
                     (512, 256, 128),  # Three-layer moderate
                 ],   
                 'learning_rate_init': [0.0001, 0.001, 0.01],
-                'max_iter': [200, 500, 1000]  # Number of iterations
+                'max_iter': [200, 500]  # Number of iterations
             }
             ### 2.2 Train
             grid_search = GridSearchCV(estimator=mlp, param_grid=param_grid, 
