@@ -216,15 +216,17 @@ def get_activation_tuple(name):
     return hook      
 
 def get_prediction(
-    prop_name="matbench_jdft2d_exfoliation_en",
-    fold=0,
-    atoms=None,
-    cutoff=8,
-    output_path=None,
-    file_path=None
+    args
 ):
     """Load Model with config and saved .pt state_dict"""
-    folder_path = prop_name + f"_outdir_{fold}"
+    prop_name = args.prop_name
+    fold = args.fold
+    file_path = args.file_path
+    output_path = args.output_path
+    cutoff = args.cutoff
+
+    folder_dir = os.path.dirname(os.path.dirname(file_path))
+    folder_path = os.path.join(folder_dir, prop_name + f"_outdir_{fold}")
     config_path = os.path.join(folder_path, "config.json")
     model_path = os.path.join(folder_path, "best_model.pt")
 
@@ -290,11 +292,8 @@ def get_prediction(
 if __name__ == "__main__":
     args = parser.parse_args(sys.argv[1:])
     prop_name = args.prop_name
-    fold = args.fold
     file_path = args.file_path
     file_format = args.file_format
-    output_path = args.output_path
-    cutoff = args.cutoff
     if file_format == "poscar":
         atoms = Atoms.from_poscar(file_path)
     elif file_format == "cif":
@@ -308,7 +307,7 @@ if __name__ == "__main__":
 
     # atoms is a single compound!
     out_data = get_prediction(
-        prop_name=prop_name, fold=fold, cutoff=float(cutoff), atoms=atoms, output_path= output_path, file_path=file_path
+        args
     )
 
     print("Predicted value:", prop_name, file_path, out_data)
