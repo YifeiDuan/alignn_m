@@ -21,7 +21,7 @@ def feat_prep(
 
     # 1
     # 1.1  Attach the appropriate property value and identifier (jid) to each of the extracted features file based on id_prop.csv
-    id_list = pd.read_csv(os.path.join(id_prop_dir, f"text/{dataset}/id_prop_all.csv"))
+    id_list = pd.read_csv(os.path.join(id_prop_dir, f"{dataset}/id_prop_all.csv"))
     id_mat = list(id_list.iloc[:, 0])
     data_dict = {}
     for a in range(len(id_mat)):
