@@ -70,7 +70,7 @@ def find_subdirs_with_string(directory, search_str):
 
    
 # Main function
-def run_regressor_rf(args):
+def run_regressor_cv_rf(args):
     if args.prop != "all":
         props = [args.prop]
     else:
@@ -99,35 +99,21 @@ def run_regressor_rf(args):
             y_test = df_test["target"]
 
             # 2. Model training with hyperparam tuning
+            rf = RandomForestRegressor(random_state=42)
             ### 2.1 Prepare hyperparams
             param_grid = {
                 'n_estimators': [50, 100, 200, 500, 1000],
-                'max_depth': [None, 10, 20],
-                'min_samples_split': [2, 5, 10],
-                'min_samples_leaf': [1, 2, 4]
+                'max_depth': [None, 10, 20]
             }
-            param_combinations = list(itertools.product(*param_grid.values()))
-            param_names = list(param_grid.keys())
-            ### 2.2 Training with validation
-            best_params = None
-            best_model = None
-            best_score = float('inf')
-            for params in param_combinations:
-                ### 2.3 Loop through each combination
-                param_dict = dict(zip(param_names, params))
-                rf = RandomForestRegressor(**param_dict, random_state=42)
-                rf.fit(X_train, y_train)
-                ### 2.4 Evaluate on the validation set
-                y_val_pred = rf.predict(X_val)
-                mae = mean_absolute_error(y_val, y_val_pred)
-                print(f"Params: {param_dict}, Val MAE: {mae}")
-                ### 2.5 Track and update the best performing parameters
-                if mae < best_score:
-                    best_score = mae
-                    best_params = param_dict
-                    best_model = rf
+            ### 2.2 Train
+            grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, 
+                           cv=5, n_jobs=-1, scoring='neg_mean_absolute_error', verbose=2)
+            grid_search.fit(X_train, y_train)
 
             # 3. Save best model
+            best_params = grid_search.best_params_
+            best_score = -grid_search.best_score_
+            best_model = grid_search.best_estimator_
             print(f"Best Hyperparams: {best_params}, Val MAE: {best_score}")
             ### 3.1 Process save_dir name
             if len(splits_dirs) != 0:
@@ -142,7 +128,7 @@ def run_regressor_rf(args):
                             "hyperparameters": best_params,
                             "val_mae": best_score
             }
-            with open(os.path.join(save_dir, "rf_best_params.json"), "w") as f:
+            with open(os.path.join(save_dir, "rf_cv_best_params.json"), "w") as f:
                 json.dump(model_dict, f, indent=4)
             
             # 4. Evaluate best model on data splits
@@ -156,7 +142,7 @@ def run_regressor_rf(args):
                 "y_pred": y_train_pred,
                 "train_mae": mae_train
             }
-            with open(os.path.join(save_dir, "rf_eval_train.json"), "w") as f:
+            with open(os.path.join(save_dir, "rf_cv_eval_train.json"), "w") as f:
                 json.dump(train_json, f, indent=4)
             ### 4.2 Test set
             y_test_pred = best_model.predict(X_test)
@@ -168,13 +154,13 @@ def run_regressor_rf(args):
                 "y_pred": y_test_pred,
                 "test_mae": mae_test
             }
-            with open(os.path.join(save_dir, "rf_eval_test.json"), "w") as f:
+            with open(os.path.join(save_dir, "rf_cv_eval_test.json"), "w") as f:
                 json.dump(test_json, f, indent=4)
 
 
 
 
-def run_regressor_mlp(args):
+def run_regressor_cv_mlp(args):
     if args.prop != "all":
         props = [args.prop]
     else:
@@ -203,6 +189,7 @@ def run_regressor_mlp(args):
             y_test = df_test["target"]
 
             # 2. Model training with hyperparam tuning
+            mlp = MLPRegressor(random_state=42)
             ### 2.1 Prepare hyperparams
             param_grid = {
                 'hidden_layer_sizes': [
@@ -213,36 +200,19 @@ def run_regressor_mlp(args):
                     (512,),  # Moderate single-layer model
                     (512, 256),  # Two-layer moderate
                     (512, 256, 128),  # Three-layer moderate
-                ],  
-                'activation': ['relu', 'tanh'],  
-                'solver': ['adam', 'sgd'],  
-                'alpha': [0.0001, 0.001, 0.01, 0.1],  
-                'learning_rate': ['constant', 'adaptive'],  
+                ],   
                 'learning_rate_init': [0.0001, 0.001, 0.01],
                 'max_iter': [200, 500, 1000]  # Number of iterations
             }
-            param_combinations = list(itertools.product(*param_grid.values()))
-            param_names = list(param_grid.keys())
-            ### 2.2 Training with validation
-            best_params = None
-            best_model = None
-            best_score = float('inf')
-            for params in param_combinations:
-                ### 2.3 Loop through each combination
-                param_dict = dict(zip(param_names, params))
-                mlp = MLPRegressor(**param_dict, random_state=42)
-                mlp.fit(X_train, y_train)
-                ### 2.4 Evaluate on the validation set
-                y_val_pred = mlp.predict(X_val)
-                mae = mean_absolute_error(y_val, y_val_pred)
-                print(f"Params: {param_dict}, Val MAE: {mae}")
-                ### 2.5 Track and update the best performing parameters
-                if mae < best_score:
-                    best_score = mae
-                    best_params = param_dict
-                    best_model = mlp
+            ### 2.2 Train
+            grid_search = GridSearchCV(estimator=mlp, param_grid=param_grid, 
+                           cv=5, n_jobs=-1, scoring='neg_mean_absolute_error', verbose=2)
+            grid_search.fit(X_train, y_train)
 
             # 3. Save best model
+            best_params = grid_search.best_params_
+            best_score = -grid_search.best_score_
+            best_model = grid_search.best_estimator_
             print(f"Best Hyperparams: {best_params}, Val MAE: {best_score}")
             ### 3.1 Process save_dir name
             if len(splits_dirs) != 0:
@@ -259,7 +229,7 @@ def run_regressor_mlp(args):
                             "biases": [b.tolist() for b in best_model.intercepts_],  # Convert NumPy arrays to lists
                             "val_mae": best_score
             }
-            with open(os.path.join(save_dir, "mlp_best_params.json"), "w") as f:
+            with open(os.path.join(save_dir, "mlp_cv_best_params.json"), "w") as f:
                 json.dump(model_dict, f, indent=4)
             
             # 4. Evaluate best model on data splits
@@ -273,7 +243,7 @@ def run_regressor_mlp(args):
                 "y_pred": y_train_pred,
                 "train_mae": mae_train
             }
-            with open(os.path.join(save_dir, "mlp_eval_train.json"), "w") as f:
+            with open(os.path.join(save_dir, "mlp_cv_eval_train.json"), "w") as f:
                 json.dump(train_json, f, indent=4)
             ### 4.2 Test set
             y_test_pred = best_model.predict(X_test)
@@ -285,7 +255,7 @@ def run_regressor_mlp(args):
                 "y_pred": y_test_pred,
                 "test_mae": mae_test
             }
-            with open(os.path.join(save_dir, "mlp_eval_test.json"), "w") as f:
+            with open(os.path.join(save_dir, "mlp_cv_eval_test.json"), "w") as f:
                 json.dump(test_json, f, indent=4)
 
             
@@ -293,8 +263,8 @@ def run_regressor_mlp(args):
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S') 
     if args.model == "rf":
-        df_rst = run_regressor_rf(args)
+        df_rst = run_regressor_cv_rf(args)
     elif args.model == "mlp":
-        df_rst = run_regressor_mlp(args)
+        df_rst = run_regressor_cv_mlp(args)
    
 
