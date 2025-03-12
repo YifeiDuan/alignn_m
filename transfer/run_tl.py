@@ -128,11 +128,12 @@ def run_regressor_rf(args):
             # 3. Save best model
             print(f"Best Hyperparams: {best_params}, Val MAE: {best_score}")
             ### 3.1 Process save_dir name
+            output_subdir = os.path.join(args.output_dir, f"{args.gnn}_{args.text}+{args.llm}")
             if len(splits_dirs) != 0:
                 split_name = os.path.basename(data_subdir)
-                save_dir = os.path.join(args.output_dir, f"{prop}_{split_name}")
+                save_dir = os.path.join(output_subdir, f"{prop}_{split_name}")
             else:
-                save_dir = os.path.join(args.output_dir, prop)
+                save_dir = os.path.join(output_subdir, prop)
             ### 3.2 Save model params
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
@@ -239,11 +240,12 @@ def run_regressor_mlp(args):
             # 3. Save best model
             print(f"Best Hyperparams: {best_params}, Val MAE: {best_score}")
             ### 3.1 Process save_dir name
+            output_subdir = os.path.join(args.output_dir, f"{args.gnn}_{args.text}+{args.llm}")
             if len(splits_dirs) != 0:
                 split_name = os.path.basename(data_subdir)
-                save_dir = os.path.join(args.output_dir, f"{prop}_{split_name}")
+                save_dir = os.path.join(output_subdir, f"{prop}_{split_name}")
             else:
-                save_dir = os.path.join(args.output_dir, prop)
+                save_dir = os.path.join(output_subdir, prop)
             ### 3.2 Save model params
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
