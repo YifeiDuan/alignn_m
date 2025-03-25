@@ -9,7 +9,8 @@ import csv
 import sys
 import json
 import zipfile
-from alignn.data import get_train_val_loaders
+# from alignn.data import get_train_val_loaders
+from ZeoliteData import get_data_alignn
 from alignn.train import train_dgl_prop
 from alignn.config import TrainingConfig
 from jarvis.db.jsonutils import loadjson
