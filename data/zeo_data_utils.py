@@ -16,7 +16,7 @@ def download_file_from_url(
     url = os.path.join(os.path.join(url_dir, url_dir), filename)
     file_name = filename
     if ".cif" in filename:
-        filen_ame = filename.split("/")[1]
+        file_name = filename.split("/")[1]
     file_path = os.path.join(save_dir, file_name)
 
     wget.download(url, file_path)
