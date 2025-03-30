@@ -49,7 +49,8 @@ def prep_zeo_dac_raw_data(zeo="MOR", props=["hoa", "henry"], sample_size=None,
         - 2: error
         """
 
-        df = pd.DataFrame({"jid": dat[:,0].astype(int), "target": dat[:,1]})
+        df = pd.DataFrame({"jid": [f"{zeo}_" + str(int(j)) for j in dat[:, 0]],     # jid: MOR_100
+                           "target": dat[:,1]})
 
         if sample_size:
             df = df.head(sample_size)
@@ -63,5 +64,6 @@ def prep_zeo_dac_raw_data(zeo="MOR", props=["hoa", "henry"], sample_size=None,
 
     # Download corresnponding cif files
     for jid in df["jid"]:
-        code = f"{jid}/{zeo}_{jid}"
+        idx = jid.split("_")[-1]    # "MOR_100" -> "100"
+        code = f"{idx}/{jid}"
         download_file_from_url(url_dir=url_dir, save_dir=save_subdir, filename=f"{code}.cif")

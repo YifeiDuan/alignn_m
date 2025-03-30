@@ -238,7 +238,7 @@ def train_for_folder(
     ##### in the case of id_prop.csv, dat is a list of df rows
         info = {}
         if id_prop_csv_file:
-            file_name = i[0]    # file_name "mb-[prop]-[id]" (e.g. "mb-jdft2d-001"), storing the pymatgen structural info of ONE specific crystal
+            file_name = i[0]    # file_name e.g. "MOR_100.cif"
             tmp = [float(j) for j in i[1:]]  # float(i[1])  # target prop value as float
             info["jid"] = file_name
 
