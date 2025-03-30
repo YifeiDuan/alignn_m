@@ -13,7 +13,7 @@ def download_file_from_url(
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    url = os.path.join(os.path.join(url_dir, url_dir), filename)
+    url = os.path.join(url_dir, filename)
     file_name = filename
     if ".cif" in filename:
         file_name = filename.split("/")[1]
