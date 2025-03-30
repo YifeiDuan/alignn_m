@@ -21,7 +21,7 @@ def download_file_from_url(
 
     wget.download(url, file_path)
 
-def prep_zeo_dac_raw_data(zeo="MOR", prop="hoa", sample_size=None, 
+def prep_zeo_dac_raw_data(zeo="MOR", props=["hoa", "henry"], sample_size=None, 
                         url_dir="https://raw.githubusercontent.com/marko-petkovic/zeolite-property-prediction/refs/heads/main/Data_raw/output1",
                         save_dir="zeo_data/dac",
                         ):
@@ -36,29 +36,30 @@ def prep_zeo_dac_raw_data(zeo="MOR", prop="hoa", sample_size=None,
     if not os.path.exists(save_subdir):
         os.makedirs(save_subdir)
 
-    download_file_from_url(url_dir=url_dir, save_dir=save_subdir, filename=f"{prop}.dat")
+    for prop in props:
+        download_file_from_url(url_dir=url_dir, save_dir=save_subdir, filename=f"{prop}.dat")
 
-    # Process the property data
+        # Process the property data
 
-    dat = np.loadtxt(os.path.join(save_subdir, f"{prop}.dat"))
-    """
-    dat has 3 columns:
-     - 0: id
-     - 1: target (hoa, or henry)
-     - 2: error
-    """
+        dat = np.loadtxt(os.path.join(save_subdir, f"{prop}.dat"))
+        """
+        dat has 3 columns:
+        - 0: id
+        - 1: target (hoa, or henry)
+        - 2: error
+        """
 
-    df = pd.DataFrame({"jid": dat[:,0].astype(int), "target": dat[:,1]})
+        df = pd.DataFrame({"jid": dat[:,0].astype(int), "target": dat[:,1]})
 
-    if sample_size:
-        df = df.head(sample_size)
-        save_subdir = os.path.join(save_subdir, f"sample_{sample_size}")
-    
-    save_propdir = os.path.join(save_subdir, prop)
-    if not os.path.exists(save_propdir):
-        os.makedirs(save_propdir)
+        if sample_size:
+            df = df.head(sample_size)
+            save_subdir = os.path.join(save_subdir, f"sample_{sample_size}")
+        
+        save_propdir = os.path.join(save_subdir, prop)
+        if not os.path.exists(save_propdir):
+            os.makedirs(save_propdir)
 
-    df.to_csv(os.path.join(save_propdir, "id_prop.csv"), index=False)
+        df.to_csv(os.path.join(save_propdir, "id_prop.csv"), index=False)
 
     # Download corresnponding cif files
     for jid in df["jid"]:
