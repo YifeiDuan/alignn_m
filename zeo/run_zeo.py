@@ -11,6 +11,8 @@ from jarvis.core.atoms import pmg_to_atoms
 from jarvis.db.jsonutils import dumpjson, loadjson
 from sklearn.metrics import mean_absolute_error, roc_auc_score
 
+import argparse
+
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -83,6 +85,26 @@ def train_zeo_dac(
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+    description="Zeo Dac run_zeo.py args"
+    )
+    parser.add_argument(
+        "--id_prop_path",
+        default="zeo_data/dac/MOR/output1/hoa/id_prop.csv",
+        help="path to the id_prop.csv file",
+    )
+    parser.add_argument(
+        "--sample_size",
+        default=200,
+        help="sample size",
+    )
+    parser.add_argument(
+        "--train_ratio",
+        default=0.75,
+        help="ratio of training set",
+    )
+    args = parser.parse_args(sys.argv[1:])
+
     ##### Load config file that contains model hyperparams #####
     config_template = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "config_example.json")
@@ -90,7 +112,9 @@ if __name__ == "__main__":
     config = loadjson(config_template)
 
     ##### Run the training loop for all tasks in mb #####
-    train_zeo_dac(config_template=config_template, file_format="cif")
+    train_zeo_dac(config_template=config_template, file_format="cif", 
+                  id_prop_path=args.id_prop_path,
+                  sample_size=args.sample_size, train_ratio=args.train_ratio)
 
     # run_dir = "."
     # # run_dir = "/wrk/knc6/matbench/benchmarks/matbench_v0.1_alignn"
