@@ -235,6 +235,8 @@ def train_for_folder(
     n_outputs = []
     dataset = []
     for i in dat:
+        if "target" in i[1]:
+            continue
     ##### in the case of id_prop.csv, dat is a list of df rows
         info = {}
         if id_prop_csv_file:
