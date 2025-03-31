@@ -25,8 +25,8 @@ def train_zeo_dac(
 ):
     df = pd.read_csv(id_prop_path)
     df = df.sample(n=sample_size, random_state=42)
-    train_df = df[:(train_ratio*sample_size)]
-    test_df = df[(train_ratio*sample_size):]
+    train_df = df[:int(train_ratio*sample_size)]
+    test_df = df[int(train_ratio*sample_size):]
     # Making sure there are not spaces or parenthesis which
     # can cause issue while creating folder
     prop = "hoa" if "hoa" in id_prop_path else "henry"
