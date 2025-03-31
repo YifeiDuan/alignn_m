@@ -23,6 +23,8 @@ def train_zeo_dac(
     id_prop_path="zeo_data/dac/MOR/output1/hoa/id_prop.csv",
     sample_size=200, train_ratio=0.75
 ):
+    script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+    
     df = pd.read_csv(id_prop_path)
     df = df.sample(n=sample_size, random_state=42)
     train_df = df[:int(train_ratio*sample_size)]
@@ -54,7 +56,6 @@ def train_zeo_dac(
     fname = f"config_{sample_size}.json"
     dumpjson(data=config, filename=fname)
 
-    script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
     print(script_dir)
     os.chdir(script_dir)      # change working directory back to the directory of .ipynb nb that calls run.py
     outdir_name = (
