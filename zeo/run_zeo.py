@@ -53,7 +53,9 @@ def train_zeo_dac(
     config["epochs"] = 10
     fname = f"config_{sample_size}.json"
     dumpjson(data=config, filename=fname)
-    os.chdir(".")      # change working directory back to the directory of .ipynb nb that calls run.py
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(script_dir)      # change working directory back to the directory of .ipynb nb that calls run.py
     outdir_name = (
         "dac"
         + "_"
