@@ -95,11 +95,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--sample_size",
+        type=int,
         default=200,
         help="sample size",
     )
     parser.add_argument(
-        "--train_ratio",
+        "--train_ratio",type=float,
         default=0.75,
         help="ratio of training set",
     )
