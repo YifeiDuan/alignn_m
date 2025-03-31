@@ -250,7 +250,7 @@ def train_for_folder(
                 multioutput = True
                 n_outputs.append(tmp)
             info["target"] = tmp
-            file_path = os.path.join(root_dir, file_name)
+            file_path = os.path.join(os.path.dirname(root_dir), file_name)
             if file_format == "poscar":     # Load in the datapoint-wise structure data (saved in poscar format from Atoms object)
                 atoms = Atoms.from_poscar(file_path)
             elif file_format == "cif":
