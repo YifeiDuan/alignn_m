@@ -404,7 +404,7 @@ def train_for_folder(
         workers=config.num_workers,
         save_dataloader=config.save_dataloader,
         use_canonize=config.use_canonize,
-        filename="dataset",
+        filename=config.output_dir.split("outdir_")[0],
         cutoff=config.cutoff,
         cutoff_extra=config.cutoff_extra,
         max_neighbors=config.max_neighbors,
