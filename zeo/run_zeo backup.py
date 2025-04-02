@@ -78,8 +78,6 @@ def train_zeo_dac(
         + fold_name
         + "/"
         + fname
-        + " --sample_size="
-        + sample_size
         + " --file_format="
         + file_format
         + " --output_dir="

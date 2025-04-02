@@ -156,7 +156,6 @@ def train_for_folder(
     atomwise_key="forces",
     gradwise_key="forces",
     stresswise_key="stresses",
-    sample_size=None,
     file_format="poscar",
     restart_model_path=None,
     output_dir=None,
@@ -165,14 +164,9 @@ def train_for_folder(
     setup(rank=rank, world_size=world_size)
     print("root_dir", root_dir)
     ##### Load dataset file, csv or json #####
-    if not sample_size:
-        id_prop_json = os.path.join(root_dir, "id_prop.json")
-        id_prop_json_zip = os.path.join(root_dir, "id_prop.json.zip")
-        id_prop_csv = os.path.join(root_dir, "id_prop.csv")
-    else:
-        id_prop_json = os.path.join(root_dir, f"id_prop_sample_{sample_size}.json")
-        id_prop_json_zip = os.path.join(root_dir, f"id_prop_sample_{sample_size}.json.zip")
-        id_prop_csv = os.path.join(root_dir, f"id_prop_sample_{sample_size}.csv")
+    id_prop_json = os.path.join(root_dir, "id_prop.json")
+    id_prop_json_zip = os.path.join(root_dir, "id_prop.json.zip")
+    id_prop_csv = os.path.join(root_dir, "id_prop.csv")
     id_prop_csv_file = False
     multioutput = False
     # lists_length_equal = True
