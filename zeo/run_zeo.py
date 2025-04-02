@@ -79,7 +79,7 @@ def train_zeo_dac(
         + "/"
         + fname
         + " --sample_size="
-        + sample_size
+        + str(sample_size)
         + " --file_format="
         + file_format
         + " --output_dir="
