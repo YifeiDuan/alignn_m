@@ -65,10 +65,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--sample_size", default=None, help="Sample size of dataset"
-)
-
-parser.add_argument(
     "--file_format", default="poscar", help="poscar/cif/xyz/pdb file format."
 )
 
@@ -152,7 +148,6 @@ def train_for_folder(
     world_size=0,
     root_dir="examples/sample_data",
     config_name="config.json",
-    sample_size=None,
     classification_threshold=None,
     batch_size=None,
     epochs=None,
@@ -169,23 +164,18 @@ def train_for_folder(
     setup(rank=rank, world_size=world_size)
     print("root_dir", root_dir)
     ##### Load dataset file, csv or json #####
-    if not sample_size:
-        id_prop_json = os.path.join(root_dir, "id_prop.json")
-        id_prop_json_zip = os.path.join(root_dir, "id_prop.json.zip")
-        id_prop_csv = os.path.join(root_dir, "id_prop.csv")
-    else:
-        id_prop_json = os.path.join(root_dir, f"id_prop_sample_{sample_size}.json")
-        id_prop_json_zip = os.path.join(root_dir, f"id_prop_sample_{sample_size}.json.zip")
-        id_prop_csv = os.path.join(root_dir, f"id_prop_sample_{sample_size}.csv")
+    id_prop_json = os.path.join(root_dir, "id_prop_random.json")
+    id_prop_json_zip = os.path.join(root_dir, "id_prop_random.json.zip")
+    id_prop_csv = os.path.join(root_dir, "id_prop_random.csv")
     id_prop_csv_file = False
     multioutput = False
     # lists_length_equal = True
     if os.path.exists(id_prop_json_zip):
         dat = json.loads(
-            zipfile.ZipFile(id_prop_json_zip).read("id_prop.json")
+            zipfile.ZipFile(id_prop_json_zip).read("id_prop_random.json")
         )
     elif os.path.exists(id_prop_json):
-        dat = loadjson(os.path.join(root_dir, "id_prop.json"))
+        dat = loadjson(os.path.join(root_dir, "id_prop_random.json"))
     elif os.path.exists(id_prop_csv):   # use id_prop.csv when the file exists
         id_prop_csv_file = True
         with open(id_prop_csv, "r") as f:
@@ -460,7 +450,6 @@ if __name__ == "__main__":
                 world_size,
                 args.root_dir,
                 args.config_name,
-                args.sample_size,
                 args.classification_threshold,
                 args.batch_size,
                 args.epochs,
@@ -481,7 +470,6 @@ if __name__ == "__main__":
             world_size,
             args.root_dir,
             args.config_name,
-            args.sample_size,
             args.classification_threshold,
             args.batch_size,
             args.epochs,
