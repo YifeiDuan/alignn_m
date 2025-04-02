@@ -65,6 +65,10 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--sample_size", default=None, help="Sample size of dataset"
+)
+
+parser.add_argument(
     "--file_format", default="poscar", help="poscar/cif/xyz/pdb file format."
 )
 
