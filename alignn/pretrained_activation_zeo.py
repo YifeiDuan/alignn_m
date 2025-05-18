@@ -178,7 +178,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--output_path",
+    "--output_dir",
     default=None,
     help="Path to Output.",
 )
@@ -237,7 +237,7 @@ def get_prediction(
     """Load Model with config and saved .pt state_dict"""
     prop_name = args.prop_name
     file_dir = args.file_dir
-    output_path = args.output_path
+    output_dir = args.output_dir
     cutoff = args.cutoff
 
     file_format = args.file_format
@@ -268,9 +268,10 @@ def get_prediction(
     
     # embed()
     for i in range(len(act_list_x)):
-        act_list_x[i] = act_list_x[i].detach().cpu().numpy()
+        if isinstance(act_list_x[i], torch.Tensor):
+            act_list_x[i] = act_list_x[i].detach().cpu().numpy()
 
-    
+    output_path = os.path.join(output_dir, f"sample_{sample_size}_train_{train_ratio}")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -279,14 +280,16 @@ def get_prediction(
     df_act_x.to_csv('{}/{}_x.csv'.format(output_path, struct_file), index=False)    
 
     for i in range(len(act_list_y)):
-        act_list_y[i] = act_list_y[i].detach().cpu().numpy()
+        if isinstance(act_list_y[i], torch.Tensor):
+            act_list_y[i] = act_list_y[i].detach().cpu().numpy()
 
     np_act_y = np.concatenate(act_list_y, axis=0)            
     df_act_y = pd.DataFrame(np_act_y)
     df_act_y.to_csv('{}/{}_y.csv'.format(output_path, struct_file), index=False)     
 
     for i in range(len(act_list_z)):
-        act_list_z[i] = act_list_z[i].detach().cpu().numpy()    
+        if isinstance(act_list_z[i], torch.Tensor):
+            act_list_z[i] = act_list_z[i].detach().cpu().numpy()    
 
     np_act_z = np.concatenate(act_list_z, axis=0)            
     df_act_z = pd.DataFrame(np_act_z)
@@ -316,7 +319,9 @@ if __name__ == "__main__":
 
 
     ### Load Model ###
-    folder_path = f"zeo_{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
+    folder_path = f"dac_{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
+    if prop_name not in ["hoa", "henry"]:
+        folder_path = f"{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
     config_path = os.path.join(folder_path, "config.json")
     model_path = os.path.join(folder_path, "best_model.pt")
 
