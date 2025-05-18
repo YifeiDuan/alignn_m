@@ -39,6 +39,9 @@ parser.add_argument('--output_dir', help='path to the save output embedding', ty
 parser.add_argument('--struc_format', help='structure file format', choices=['poscar', 'cif'], type=str, required=False)
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'],default='raw', type=str, required=False)
 parser.add_argument('--skip_sentence', help='skip the ith sentence or a specific topic', default="none", required=False)
+
+
+parser.add_argument('--sample_size', type=int, required=False)
 args,_ = parser.parse_known_args()
 
 def describe_chemical_data(data, skip="none"):
@@ -278,12 +281,20 @@ def main_zeo(args):
     else:
         parent_dir = os.path.dirname(struc_dir)     # The direct parent directory of the struc_dir
         output_dir = os.path.join(parent_dir, f"text_{args.text}")
+
+    df = pd.read_csv(os.path.join(struc_dir, "hoa/id_prop_random.csv"))
+    if args.sample_size:
+        sample_size = args.sample_size
+        output_dir = output_dir + f"_sample_{sample_size}"
+        
+        df = df.sample(n=sample_size, random_state=42)
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
 
     ### Access all .cif files
-    files = glob.glob(f"{args.struc_dir}/*.cif")  # List of all .cif files in the directory
+    files = [f"{args.struc_dir}/{filename}.cif" for filename in list(df["jid"])]  # List of all .cif files in the directory
         
     for idx, file_path in enumerate(files):      # file_path: e.g. "../zeo_data/zeolite-property/MOR_1.cif" 
         identifier = file_path.split("/")[-1].split(".")[0]      # identifer: e.g. "MOR_1"

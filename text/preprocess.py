@@ -463,12 +463,114 @@ def preprocess_data_mb(args):
     logging.info(f"Saved to {file_path}")
 
 
+def preprocess_data_zeo(args):
+
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
+    # 1. Load Tokenizer
+    llm = args.llm
+    ### by default: llm = "matbert-base-cased"
+    ### for this model, we need to download it first as in download_llm.ipynb
+    if llm == "matbert-base-cased":
+        tokenizer = BertTokenizerFast.from_pretrained(os.path.join("./matbert", llm), do_lower_case=False)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(llm)
+    # 2. Load Model
+    device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
+    if "gpt2" in llm.lower():
+        model = GPT2Model.from_pretrained(llm)
+    elif "bert" in llm.lower():
+        try:
+            model = BertModel.from_pretrained(llm)
+        except:
+            model = BertModel.from_pretrained(os.path.join("./matbert", llm))
+        
+    elif "opt" in llm.lower():
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-6.7b", 
+            device_map='auto',
+            quantization_config=quantization_config
+        )
+
+    model.to(device)
+
+    # 3. Load generated text data
+    # 4. Get vectorized embeddings
+    embeddings = []
+    samples=[]
+    # print(model)
+    max_token_length = model.config.max_position_embeddings     # config loaded along with the model
+    logging.info(f"Max token length: {max_token_length}")
+    if not args.cache_csv:
+        raise Exception("please specify cache_csv: the csv file with generated text descriptions for each compound")
+    
+    assert args.text in args.cache_csv
+    df_text = pd.read_csv(args.cache_csv, index_col = 0)
+
+    for num, row in tqdm(df_text.iterrows(), total=len(df_text), desc="Inferring vectorized text embeddings"):
+
+        jid = row["jid"]
+        text = row["text"]
+       
+
+        if args.skip_sentence is not None:
+            text = remove_sentence_by_index(text, args.skip_sentence, args.text)
+        elif args.mask_words is not None:
+            text = mask_words(text, args.mask_words)
+            print(text)
+        inputs = tokenizer(text, max_length=512, truncation=True, return_tensors="pt").to(device)
+        if len(inputs['input_ids'][0]) <= max_token_length:
+            with torch.no_grad():
+                with torch.cuda.amp.autocast():
+                    output = model(**inputs)
+            if device.type == 'cuda':
+                emb = output.last_hidden_state.mean(dim=1).cpu().numpy().flatten()
+            else:
+                emb = output.last_hidden_state.mean(dim=1).numpy().flatten()
+            embeddings.append(emb)
+            samples.append(jid)
+
+        # if (num+1)%50==0:
+        #     json_embeddings = [list(embedding) for embedding in embeddings]
+        #     json_embeddings = [[np.float64(val) for val in json_embedding] for json_embedding in json_embeddings]
+        #     sample_embeddings = {
+        #         "jid": samples,
+        #         "embedding": json_embeddings
+        #     }
+        #     with open(f"{args.output_dir}/sample_embeddings.json", 'w') as file:
+        #         json.dump(sample_embeddings, file, indent=4)
+
+
+    # 6. Save embeddings as .csv
+    embeddings = np.vstack(embeddings)
+    #labels = np.array([entry['exfoliation_energy'] for entry in dat])
+
+
+    n = len(embeddings)
+    assert n == len(samples)
+    df = pd.DataFrame(embeddings, index=samples)
+
+    n = len(df)
+    file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_{n}.csv"
+    if args.skip_sentence is not None:
+        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_{n}.csv"
+    if args.mask_words is not None:
+        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words[0]}_{n}.csv"
+    if args.output_dir:
+        file_path = os.path.join(args.output_dir, file_path) 
+    df.to_csv(file_path)
+    logging.info(f"Saved to {file_path}")
+
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO) 
     if args.database == "matbench":
         preprocess_data_mb(args)
+    elif args.database == "zeo":
+        preprocess_data_zeo(args)
     elif args.database == "jarvis" or args.database == "mp":
         preprocess_data_jv_mp(args)
     logging.info(f"Finished generate embeddings")
