@@ -150,6 +150,24 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--id_prop_filename", default="id_prop_random.csv", help="use a matbench dataset"
+)
+
+
+parser.add_argument(
+    "--sample_size",
+    type=int,
+    default=200,
+    help="sample size",
+)
+
+parser.add_argument(
+    "--train_ratio",type=float,
+    default=0.75,
+    help="ratio of training set",
+)
+
+parser.add_argument(
     "--file_format", default="cif", help="poscar/cif/xyz/pdb file format."
 )
 
@@ -213,7 +231,8 @@ def get_activation_tuple(name):
 
 def get_prediction(
     args,
-    idx
+    idx,
+    model
 ):
     """Load Model with config and saved .pt state_dict"""
     prop_name = args.prop_name
@@ -234,26 +253,7 @@ def get_prediction(
         atoms = Atoms.from_pdb(file_path, max_lat=500)
     else:
         raise NotImplementedError("File format not implemented", file_format)
-
-    folder_dir = os.path.dirname(os.path.dirname(file_path))
-    folder_path = os.path.join(folder_dir, prop_name + f"_outdir_{fold}")
-    config_path = os.path.join(folder_path, "config.json")
-    model_path = os.path.join(folder_path, "best_model.pt")
-
-    config_dict = loadjson(config_path)       # Load config.json
     
-    config = TrainingConfig(**config_dict)
-    if type(config) is dict:
-        try:
-            config = TrainingConfig(**config)
-        except Exception as exp:
-            print("Check", exp)
-
-    model = ALIGNN_infer(config.model)   
-    # Config the ALIGNN model, using the modified class ALIGNN_infer to have atom, bond, angle features returned
-    model.load_state_dict(torch.load(model_path, weights_only=True))    # Load state dict for the saved ALIGNN model
-    model = model.to(device)
-    model.eval()
 
     g, lg = Graph.atom_dgl_multigraph(atoms, cutoff=float(cutoff))
     #print(g)
@@ -264,8 +264,7 @@ def get_prediction(
 
 
     substring = file_path.split('/')[-1]
-    struct_file = substring.split('.vasp')[0]    
-    # In case there is ".vasp" in the file name. In the matbench cases, there shouldn't be any.
+    struct_file = substring.split('.')[0]           # remove ".cif", ".vasp", etc.
     
     # embed()
     for i in range(len(act_list_x)):
@@ -303,10 +302,58 @@ if __name__ == "__main__":
     args = parser.parse_args(sys.argv[1:])
     prop_name = args.prop_name
 
-    # atoms is a single compound!
-    out_data = get_prediction(
-        args
-    )
 
-    print("Predicted value:", prop_name, idx, out_data)
+    ### Load Data ###
+    prop_dir = os.path.join(args.file_dir, args.prop_name)
+    df = pd.read_csv(os.path.join(prop_dir, args.id_prop_filename))
+
+    sample_size = args.sample_size
+    train_ratio = args.train_ratio
+
+    df = df.sample(n=sample_size, random_state=42)
+    train_df = df[:int(train_ratio*sample_size)]
+    test_df = df[int(train_ratio*sample_size):]
+
+
+    ### Load Model ###
+    folder_path = f"zeo_{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
+    config_path = os.path.join(folder_path, "config.json")
+    model_path = os.path.join(folder_path, "best_model.pt")
+
+    config_dict = loadjson(config_path)       # Load config.json
+    
+    config = TrainingConfig(**config_dict)
+    if type(config) is dict:
+        try:
+            config = TrainingConfig(**config)
+        except Exception as exp:
+            print("Check", exp)
+
+    model = ALIGNN_infer(config.model)   
+    # Config the ALIGNN model, using the modified class ALIGNN_infer to have atom, bond, angle features returned
+    model.load_state_dict(torch.load(model_path, weights_only=True))    # Load state dict for the saved ALIGNN model
+    model = model.to(device)
+    model.eval()
+
+
+    ### Get Embedding ###
+    for idx in train_df["jid"]:     # e.g. "MOR_0"
+        # atoms is a single compound!
+        out_data = get_prediction(
+            args,
+            idx,
+            model
+        )
+
+        print("Predicted value:", prop_name, idx, out_data)
+    
+    for idx in test_df["jid"]:     # e.g. "MOR_0"
+        # atoms is a single compound!
+        out_data = get_prediction(
+            args,
+            idx,
+            model
+        )
+
+        print("Predicted value:", prop_name, idx, out_data)
 
