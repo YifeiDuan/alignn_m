@@ -237,6 +237,74 @@ def prepare_dataset_mb(args, prop):
                 save_path = os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")
                 df_subset.to_csv(save_path)
                 logging.info(f"Saved subset dataset to {save_path}")
+
+
+def prepare_dataset_zeo(args, prop):
+
+    # 1. Load text embeddings
+    text_embed_subdir = f"embedding_*"
+    file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_*.csv"
+    if args.skip_sentence is not None:
+        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}*.csv"
+    if args.mask_words is not None:
+        file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}*.csv"
+    if args.input_dir:
+        file_path = os.path.join(text_embed_subdir, file_path)
+        file_path = os.path.join(args.input_dir, file_path)
+        print(file_path)    # Should be something like "YY/text/matbench_XX/embedding_XX/embeddings_MM_robo_*.csv"
+    embed_file = glob.glob(file_path)
+
+    if len(embed_file)>1:
+        if args.skip_sentence is None and args.mask_words is None:
+            pattern_str = rf".*embeddings_{args.llm.replace('/', '_')}_{args.text}_(\d+)"   # "(\d+)" matches a sequence of digits
+            pattern = re.compile(pattern_str)
+            embed_file = [file for file in embed_file if pattern.match(file) and "cluster" not in file]
+        latest_file = max(embed_file, key=os.path.getctime)
+        print("Latest file:", latest_file)
+        embed_file = [latest_file]
+    
+    logging.info(f"Found embedding file: {embed_file}")
+    df_embed = pd.read_csv(embed_file[0], index_col = 0).reset_index().rename(columns={'index': 'ids'})
+
+    # 2. Prepare save names
+    if args.gnn_only:
+        dataset_filename = f"dataset_alignn_only_prop_{prop}"
+    else:
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_prop_{prop}"
+    if args.skip_sentence is not None:
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_prop_{prop}"
+    if args.mask_words is not None:
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}_prop_{prop}"
+
+    # 3. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
+    data_save_dir = f"./data/{prop}"
+    if not os.path.exists(data_save_dir):
+        os.makedirs(data_save_dir)
+
+    # TODO: Process split-specific merging
+    if args.gnn_file_dir:
+        gnn_file_dir = args.gnn_file_dir      # direct parent dir of the gnn embedding file
+    split_dirs = find_subdirs_with_string(gnn_file_dir, "split_fold")       # Find matching subdirs with "split_fold" in name
+    if len(split_dirs) != 0:
+        for split_dir in split_dirs:
+
+            split_name = os.path.basename(split_dir)
+            split_data_save_dir = os.path.join(data_save_dir, split_name)
+            if not os.path.exists(split_data_save_dir):
+                os.makedirs(split_data_save_dir)
+
+            for subset in ["train", "val", "test"]:
+                df_subset = pd.read_csv(os.path.join(split_dir, f"data_{subset}.csv"))
+                df_subset = df_subset.merge(df_embed, how='inner', left_on="id", right_on="ids", suffixes=('_gnn', '_lm'))
+                print(df_subset.head())
+                df_subset["target"] = df_subset.pop("target")       # Reordering columns, "matbench_PROP" to the last col
+                df_subset["ids"] = df_subset.pop("ids")     # Reordering columns, "ids" to the last col
+                df_subset["id"] = df_subset.pop("id")     # Reordering columns, "id" to the last col
+                df_subset = df_subset.drop(df_subset.filter(like='Unnamed').columns, axis=1)
+                ### Save the subset of merged multimodal data
+                save_path = os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")
+                df_subset.to_csv(save_path)
+                logging.info(f"Saved subset dataset to {save_path}")
     
 
 
@@ -272,4 +340,7 @@ if __name__ == "__main__":
             props = props_mb
         for prop in props:
             prepare_dataset_mb(args, prop)
+    elif args.database == "zeo":
+        prop = args.prop
+        prepare_dataset_zeo(args, prop)
 
