@@ -48,6 +48,8 @@ parser.add_argument('--gnn_only', action='store_true')
 parser.add_argument('--gnn_file_dir', help='pretrained gnn embedding directory', default="../alignn/embed_matbench_jdft2d/organized", type=str, required=False)
 parser.add_argument('--gnn_file_path', help='pretrained gnn embedding file', default="../alignn/embed_matbench_jdft2d/fold_0/xyz/data_final_9_9_5.csv", type=str, required=False)
 parser.add_argument('--split_dir', type=str, required=False)
+parser.add_argument('--sample_size', type=int, required=False)
+parser.add_argument('--train_ratio', type=float, required=False)
 parser.add_argument('--sample', action='store_true')
 parser.add_argument('--skip_sentence', help='skip the ith sentence', default=None, required=False)
 parser.add_argument('--mask_words', help='skip the ith word', default=None, required=False)
@@ -239,7 +241,9 @@ def prepare_dataset_mb(args, prop):
                 logging.info(f"Saved subset dataset to {save_path}")
 
 
-def prepare_dataset_zeo(args, prop):
+def prepare_dataset_zeo(args, prop="dac_hoa"):
+    sample_size = args.sample_size
+    train_ratio = args.train_ratio
 
     # 1. Load text embeddings
     text_embed_subdir = f"embedding_*"
@@ -268,57 +272,39 @@ def prepare_dataset_zeo(args, prop):
 
     # 2. Prepare save names
     if args.gnn_only:
-        dataset_filename = f"dataset_alignn_only_prop_{prop}"
+        dataset_filename = f"dataset_alignn_only_prop_{prop}_sample_{sample_size}_train_{train_ratio}"
     else:
-        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_prop_{prop}"
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_prop_{prop}_sample_{sample_size}_train_{train_ratio}"
     if args.skip_sentence is not None:
-        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_prop_{prop}"
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_prop_{prop}_sample_{sample_size}_train_{train_ratio}"
     if args.mask_words is not None:
-        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}_prop_{prop}"
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}_prop_{prop}_sample_{sample_size}_train_{train_ratio}"
 
     # 3. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
-    data_save_dir = f"./data/{prop}"
+    data_save_dir = f"./data/{prop}_sample_{sample_size}_train_{train_ratio}"
     if not os.path.exists(data_save_dir):
         os.makedirs(data_save_dir)
 
     # TODO: Process split-specific merging
     if args.gnn_file_dir:
         gnn_file_dir = args.gnn_file_dir      # direct parent dir of the gnn embedding file
-    split_dirs = find_subdirs_with_string(gnn_file_dir, "split_fold")       # Find matching subdirs with "split_fold" in name
-    if len(split_dirs) != 0:
-        for split_dir in split_dirs:
 
-            split_name = os.path.basename(split_dir)
-            split_data_save_dir = os.path.join(data_save_dir, split_name)
-            if not os.path.exists(split_data_save_dir):
-                os.makedirs(split_data_save_dir)
 
-            for subset in ["train", "val", "test"]:
-                df_subset = pd.read_csv(os.path.join(split_dir, f"data_{subset}.csv"))
-                df_subset = df_subset.merge(df_embed, how='inner', left_on="id", right_on="ids", suffixes=('_gnn', '_lm'))
-                print(df_subset.head())
-                df_subset["target"] = df_subset.pop("target")       # Reordering columns, "matbench_PROP" to the last col
-                df_subset["ids"] = df_subset.pop("ids")     # Reordering columns, "ids" to the last col
-                df_subset["id"] = df_subset.pop("id")     # Reordering columns, "id" to the last col
-                df_subset = df_subset.drop(df_subset.filter(like='Unnamed').columns, axis=1)
-                ### Save the subset of merged multimodal data
-                save_path = os.path.join(split_data_save_dir, f"{dataset_filename}_{subset}.csv")
-                df_subset.to_csv(save_path)
-                logging.info(f"Saved subset dataset to {save_path}")
+    for subset in ["train", "val", "test"]:
+        df_subset = pd.read_csv(os.path.join(gnn_file_dir, f"data_{subset}.csv"))
+        df_subset = df_subset.merge(df_embed, how='inner', left_on="jid", right_on="ids", suffixes=('_gnn', '_lm'))
+        print(df_subset.head())
+        df_subset["target"] = df_subset.pop("target")       # Reordering columns, "matbench_PROP" to the last col
+        df_subset["ids"] = df_subset.pop("ids")     # Reordering columns, "ids" to the last col
+        df_subset["jid"] = df_subset.pop("jid")     # Reordering columns, "id" to the last col
+        df_subset = df_subset.drop(df_subset.filter(like='Unnamed').columns, axis=1)
+        ### Save the subset of merged multimodal data
+        save_path = os.path.join(data_save_dir, f"{dataset_filename}_{subset}.csv")
+        df_subset.to_csv(save_path)
+        logging.info(f"Saved subset dataset to {save_path}")
     
 
 
-
-def find_subdirs_with_string(directory, search_str):
-    """
-    Find all subdirs that contain search_str, for a given directory
-    """
-    matching_subdirs = []
-    for root, dirs, _ in os.walk(directory):
-        for subdir in dirs:
-            if search_str in subdir:
-                matching_subdirs.append(os.path.join(root, subdir))
-    return matching_subdirs
 
 
 if __name__ == "__main__":
