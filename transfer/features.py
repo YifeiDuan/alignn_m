@@ -306,6 +306,19 @@ def prepare_dataset_zeo(args, prop="dac_hoa"):
 
 
 
+def find_subdirs_with_string(directory, search_str):
+    """
+    Find all subdirs that contain search_str, for a given directory
+    """
+    matching_subdirs = []
+    for root, dirs, _ in os.walk(directory):
+        for subdir in dirs:
+            if search_str in subdir:
+                matching_subdirs.append(os.path.join(root, subdir))
+    return matching_subdirs
+
+
+
 
 if __name__ == "__main__":
     print(args.database)
