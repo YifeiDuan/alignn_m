@@ -231,14 +231,36 @@ def get_activation_tuple(name):
 
 def get_prediction(
     args,
-    idx,
-    model
+    idx
 ):
     """Load Model with config and saved .pt state_dict"""
     prop_name = args.prop_name
     file_dir = args.file_dir
     output_dir = args.output_dir
     cutoff = args.cutoff
+
+    ### Load Model ###
+    folder_path = f"dac_{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
+    if prop_name not in ["hoa", "henry"]:
+        folder_path = f"{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
+    config_path = os.path.join(folder_path, "config.json")
+    model_path = os.path.join(folder_path, "best_model.pt")
+
+    config_dict = loadjson(config_path)       # Load config.json
+    
+    config = TrainingConfig(**config_dict)
+    if type(config) is dict:
+        try:
+            config = TrainingConfig(**config)
+        except Exception as exp:
+            print("Check", exp)
+
+    model = ALIGNN_infer(config.model)   
+    # Config the ALIGNN model, using the modified class ALIGNN_infer to have atom, bond, angle features returned
+    model.load_state_dict(torch.load(model_path, weights_only=True))    # Load state dict for the saved ALIGNN model
+    model = model.to(device)
+    model.eval()
+    
 
     file_format = args.file_format
 
@@ -318,27 +340,7 @@ if __name__ == "__main__":
     test_df = df[int(train_ratio*sample_size):]
 
 
-    ### Load Model ###
-    folder_path = f"dac_{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
-    if prop_name not in ["hoa", "henry"]:
-        folder_path = f"{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
-    config_path = os.path.join(folder_path, "config.json")
-    model_path = os.path.join(folder_path, "best_model.pt")
-
-    config_dict = loadjson(config_path)       # Load config.json
     
-    config = TrainingConfig(**config_dict)
-    if type(config) is dict:
-        try:
-            config = TrainingConfig(**config)
-        except Exception as exp:
-            print("Check", exp)
-
-    model = ALIGNN_infer(config.model)   
-    # Config the ALIGNN model, using the modified class ALIGNN_infer to have atom, bond, angle features returned
-    model.load_state_dict(torch.load(model_path, weights_only=True))    # Load state dict for the saved ALIGNN model
-    model = model.to(device)
-    model.eval()
 
 
     ### Get Embedding ###
@@ -346,8 +348,7 @@ if __name__ == "__main__":
         # atoms is a single compound!
         out_data = get_prediction(
             args,
-            idx,
-            model
+            idx
         )
 
         print("Predicted value:", prop_name, idx, out_data)
@@ -356,8 +357,7 @@ if __name__ == "__main__":
         # atoms is a single compound!
         out_data = get_prediction(
             args,
-            idx,
-            model
+            idx
         )
 
         print("Predicted value:", prop_name, idx, out_data)
