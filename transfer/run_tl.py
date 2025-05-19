@@ -37,16 +37,7 @@ props_mb = [
 parser = argparse.ArgumentParser(description='run ml regressors on dataset')
 # parser.add_argument('--data_path', help='path to the dataset',default=None, type=str, required=False)
 parser.add_argument('--input_dir', help='input data directory', default="./data", type=str,required=False)
-parser.add_argument('--prop', help="specify property from \
-                    'matbench_jdft2d',\
-                    'matbench_phonons',\
-                    'matbench_dielectric',\
-                    'matbench_log_gvrh',\
-                    'matbench_log_kvrh',\
-                    'matbench_perovskites',\
-                    'matbench_mp_e_form',\
-                    'matbench_mp_gap',\
-                    'matbench_mp_is_metal'", default='matbench_jdft2d', required=False)
+parser.add_argument('--prop', help="specify property", default='matbench_jdft2d', required=False)
 parser.add_argument('--model', help='model to train', choices=['rf', 'mlp'], default='mlp', type=str, required=False)
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo'], default='raw', type=str, required=False)
 parser.add_argument('--llm', help='pre-trained llm embedding to use', default='matbert-base-cased', type=str,required=False)
