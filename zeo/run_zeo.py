@@ -51,7 +51,7 @@ def train_zeo_dac(
     config["batch_size"] = 32
     config["test_batch_size"] = 4
     # TODO: after debugging, change epochs back to 500
-    config["epochs"] = 200
+    config["epochs"] = 500
     # config["epochs"] = 10
     fname = f"config_{sample_size}.json"
     dumpjson(data=config, filename=fname)
