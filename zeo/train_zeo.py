@@ -59,6 +59,11 @@ parser.add_argument(
     help="Folder with id_props.csv, structure files",
 )
 parser.add_argument(
+    "--id_prop_file",
+    default="id_prop_random",
+    help="Filename for the id_prop main file",
+)
+parser.add_argument(
     "--config_name",
     default="alignn/examples/sample_data/config_example.json",
     help="Name of the config file",
@@ -450,6 +455,7 @@ if __name__ == "__main__":
             args=(
                 world_size,
                 args.root_dir,
+                args.id_prop_file,
                 args.config_name,
                 args.classification_threshold,
                 args.batch_size,
@@ -470,6 +476,7 @@ if __name__ == "__main__":
             0,
             world_size,
             args.root_dir,
+            args.id_prop_file,
             args.config_name,
             args.classification_threshold,
             args.batch_size,
