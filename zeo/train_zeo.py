@@ -147,7 +147,7 @@ def train_for_folder(
     rank=0,
     world_size=0,
     root_dir="examples/sample_data",
-    id_prop_file="id_prop_random"
+    id_prop_file="id_prop_random",
     config_name="config.json",
     classification_threshold=None,
     batch_size=None,
