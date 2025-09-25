@@ -26,7 +26,7 @@ def train_zeo_dac(
     script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
     df = pd.read_csv(id_prop_path)
-    df = df.sample(n=sample_size, random_state=42)
+    df = df[:int(sample_size)]
     train_df = df[:int(train_ratio*sample_size)]
     test_df = df[int(train_ratio*sample_size):]
     # Making sure there are not spaces or parenthesis which
@@ -64,7 +64,7 @@ def train_zeo_dac(
         + prop.replace(" ", "_")
         .replace("(", "-")
         .replace(")", "-")
-        + "_sample_"
+        + "_scaffold_sample_"
         + str(sample_size)
         + "_train_"
         + str(train_ratio)
@@ -72,7 +72,7 @@ def train_zeo_dac(
     )
     cmd = (
         python_executable + " "+
-        "train_zeo.py --root_dir "
+        "train_zeo_scaffold.py --root_dir "
         + fold_name
         + " --config_name "
         + fold_name

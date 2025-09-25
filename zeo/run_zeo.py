@@ -33,6 +33,7 @@ def train_zeo_dac(
     # can cause issue while creating folder
     prop = "hoa" if "hoa" in id_prop_path else "henry"
     fold_name = os.path.dirname(id_prop_path)
+    id_prop_file, ext = os.path.splitext(os.path.basename(id_prop_path))
     os.chdir(fold_name)     # create a folder for the current fold of the current prop dataset, and change the working directory here
     # ALIGNN requires the id_prop.csv file
     
@@ -51,7 +52,7 @@ def train_zeo_dac(
     config["batch_size"] = 32
     config["test_batch_size"] = 4
     # TODO: after debugging, change epochs back to 500
-    config["epochs"] = 500
+    config["epochs"] = 200
     # config["epochs"] = 10
     fname = f"config_{sample_size}.json"
     dumpjson(data=config, filename=fname)
@@ -74,6 +75,8 @@ def train_zeo_dac(
         python_executable + " "+
         "train_zeo.py --root_dir "
         + fold_name
+        + " --id_prop_file "
+        + id_prop_file
         + " --config_name "
         + fold_name
         + "/"
