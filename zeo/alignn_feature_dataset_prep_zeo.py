@@ -11,6 +11,7 @@ def feat_prep(
         dataset = "hoa",
         feat_dir = "./",
         id_prop_dir = "zeo_data/dac/MOR/output1",
+        id_prop_file = "id_prop_random.csv",
         sample_size = 200,
         train_ratio = 0.75,
         identifier = 'jid',
@@ -25,7 +26,7 @@ def feat_prep(
 
     # 1
     # 1.1  Attach the appropriate property value and identifier (jid) to each of the extracted features file based on id_prop.csv
-    id_list = pd.read_csv(os.path.join(id_prop_dir, f"{dataset}/id_prop_random.csv"))
+    id_list = pd.read_csv(os.path.join(id_prop_dir, f"{dataset}/{id_prop_file}"))
     id_list = id_list.sample(n=sample_size, random_state=42)
 
     id_mat = list(id_list[identifier])
