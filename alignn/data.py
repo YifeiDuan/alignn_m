@@ -89,10 +89,10 @@ def get_id_train_val_test(
         random.seed(split_seed)
         random.shuffle(ids)
     # np.random.shuffle(ids)
-    if n_train + n_val + n_test > total_size:
+    if n_train + n_test > total_size:
         raise ValueError(
             "Check total number of samples.",
-            n_train + n_val + n_test,
+            n_train + n_test,
             ">",
             total_size,
         )
