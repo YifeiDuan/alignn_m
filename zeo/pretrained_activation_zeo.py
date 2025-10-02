@@ -155,10 +155,24 @@ parser.add_argument(
 
 
 parser.add_argument(
+    "--if_sample",
+    type=int,
+    default=1,
+    help="0: no sampling; 1: sampling",
+)
+
+parser.add_argument(
     "--sample_size",
     type=int,
     default=200,
     help="sample size",
+)
+
+parser.add_argument(
+    "--start_id",
+    type=int,
+    default=0,
+    help="starting id for sampling",
 )
 
 parser.add_argument(
@@ -332,12 +346,19 @@ if __name__ == "__main__":
     prop_dir = os.path.join(args.file_dir, args.prop_name)
     df = pd.read_csv(os.path.join(prop_dir, args.id_prop_filename))
 
+    if_sample = args.if_sample
     sample_size = args.sample_size
+    start_id = args.start_id
     train_ratio = args.train_ratio
 
-    df = df.sample(n=sample_size, random_state=42)
-    train_df = df[:int(train_ratio*sample_size)]
-    test_df = df[int(train_ratio*sample_size):]
+    if if_sample == 1:
+        # df = df.sample(n=sample_size, random_state=42)
+        df = df[start_id:(start_id+sample_size)]
+        train_df = df[:int(train_ratio*sample_size)]
+        test_df = df[int(train_ratio*sample_size):]
+    else:
+        train_df = df[:int(train_ratio*len(df))]
+        test_df = df[int(train_ratio*len(df)):]
 
 
     
