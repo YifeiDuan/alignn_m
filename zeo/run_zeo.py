@@ -71,10 +71,10 @@ def train_zeo_dac(
         + prop.replace(" ", "_")
         .replace("(", "-")
         .replace(")", "-")
-        + "_sample_"
-        + str(sample_size)
         + "_start_"
         + str(start_id)
+        + "_sample_"
+        + str(sample_size)
         + "_train_"
         + str(train_ratio)
         + "_outdir_"
