@@ -38,7 +38,7 @@ def train_zeo_dac(
     fold_name = os.path.dirname(id_prop_path)
 
     id_prop_file = f"id_prop_random_{start_id}_{start_id+sample_size}"
-    df.to_csv(os.path.join(fold_name, f"{id_prop_file}.csv"))
+    df.to_csv(os.path.join(fold_name, f"{id_prop_file}.csv"), index=False)
     # id_prop_file, ext = os.path.splitext(os.path.basename(id_prop_path))
     os.chdir(fold_name)     # create a folder for the current fold of the current prop dataset, and change the working directory here
     # ALIGNN requires the id_prop.csv file
