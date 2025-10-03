@@ -282,10 +282,11 @@ def main_zeo(args):
         parent_dir = os.path.dirname(struc_dir)     # The direct parent directory of the struc_dir
         output_dir = os.path.join(parent_dir, f"text_{args.text}")
 
-    if args.end:
-        start_id, end_id = args.start, args.end
-        df = pd.read_csv(os.path.join(struc_dir, f"hoa/id_prop_random_{start_id}_{end_id}.csv"))
+    if args.start:
+        start_id = args.start
         sample_size = args.sample_size
+        end_id = start_id + sample_size
+        df = pd.read_csv(os.path.join(struc_dir, f"hoa/id_prop_random_{start_id}_{end_id}.csv"))
         output_dir = output_dir + f"_start_{start_id}_sample_{sample_size}"
         
         df = df.sample(n=sample_size, random_state=42)
