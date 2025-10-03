@@ -49,6 +49,7 @@ parser.add_argument('--gnn_file_dir', help='pretrained gnn embedding directory',
 parser.add_argument('--gnn_file_path', help='pretrained gnn embedding file', default="../alignn/embed_matbench_jdft2d/fold_0/xyz/data_final_9_9_5.csv", type=str, required=False)
 parser.add_argument('--split_dir', type=str, required=False)
 parser.add_argument('--sample_size', type=int, required=False)
+parser.add_argument('--start_id', type=int, required=False)
 parser.add_argument('--train_ratio', type=float, required=False)
 parser.add_argument('--sample', action='store_true')
 parser.add_argument('--skip_sentence', help='skip the ith sentence', default=None, required=False)
@@ -243,6 +244,7 @@ def prepare_dataset_mb(args, prop):
 
 def prepare_dataset_zeo(args, prop="dac_hoa"):
     sample_size = args.sample_size
+    start_id = args.start_id
     train_ratio = args.train_ratio
 
     # 1. Load text embeddings
@@ -272,16 +274,16 @@ def prepare_dataset_zeo(args, prop="dac_hoa"):
 
     # 2. Prepare save names
     if args.gnn_only:
-        dataset_filename = f"dataset_alignn_only_prop_{prop}_sample_{sample_size}_train_{train_ratio}"
+        dataset_filename = f"dataset_alignn_only_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
     else:
-        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_prop_{prop}_sample_{sample_size}_train_{train_ratio}"
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
     if args.skip_sentence is not None:
-        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_prop_{prop}_sample_{sample_size}_train_{train_ratio}"
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
     if args.mask_words is not None:
-        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}_prop_{prop}_sample_{sample_size}_train_{train_ratio}"
+        dataset_filename = f"dataset_alignn_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
 
     # 3. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
-    data_save_dir = f"./data/{prop}_sample_{sample_size}_train_{train_ratio}"
+    data_save_dir = f"./data/{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
     if not os.path.exists(data_save_dir):
         os.makedirs(data_save_dir)
 

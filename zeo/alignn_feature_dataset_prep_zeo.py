@@ -12,6 +12,7 @@ def feat_prep(
         feat_dir = "./",
         id_prop_dir = "zeo_data/dac/MOR/output1",
         id_prop_file = "id_prop_random.csv",
+        start_id = 200,
         sample_size = 200,
         train_ratio = 0.75,
         identifier = 'jid',
@@ -21,7 +22,7 @@ def feat_prep(
 ):
     
     feat_path = os.path.join(feat_dir, f"embed_dac_{dataset}")
-    feat_path = os.path.join(feat_path, f"sample_{sample_size}_train_{train_ratio}")
+    feat_path = os.path.join(feat_path, f"start_{start_id}_sample_{sample_size}_train_{train_ratio}")
     input256 = [str(i) for i in range(256)]
 
     # 1
@@ -148,8 +149,8 @@ def feat_prep(
 
 
 def split_combined_feat(
-        feat_path = "embed_dac_hoa/sample_200_train_0.75",
-        id_prop_file = "zeo_data/dac/MOR/output1/hoa/id_prop_random.csv",
+        feat_path = "embed_dac_hoa/start_200_sample_200_train_0.75",
+        id_prop_file = "zeo_data/dac/MOR/output1/hoa/id_prop_random_200_400.csv",
         sample_size = 200,
         train_ratio = 0.75,
         identifier = "jid"
@@ -158,10 +159,10 @@ def split_combined_feat(
     data_xyz = pd.read_csv(glob.glob(f"{feat_path}/xyz/data_final_*.csv")[0])
 
     df = pd.read_csv(id_prop_file)
-    df = df.sample(n=sample_size, random_state=42)
+    # df = df.sample(n=sample_size, random_state=42)
 
     train_df = df[:int(train_ratio*sample_size)]
-    test_df = df[int(train_ratio*sample_size):]     
+    test_df = df[int(train_ratio*sample_size):sample_size]     
     val_df = train_df[0: len(test_df)]
     
     train_ids, val_ids, test_ids = list(train_df[identifier]), list(val_df[identifier]), list(test_df[identifier])

@@ -254,9 +254,14 @@ def get_prediction(
     cutoff = args.cutoff
 
     ### Load Model ###
-    folder_path = f"dac_{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
-    if prop_name not in ["hoa", "henry"]:
-        folder_path = f"{prop_name}_sample_{sample_size}_train_{train_ratio}_outdir_"
+    if if_sample == 1:
+        folder_path = f"dac_{prop_name}_start_{start_id}_sample_{sample_size}_train_{train_ratio}_outdir_"
+        if prop_name not in ["hoa", "henry"]:
+            folder_path = f"{prop_name}_start_{start_id}_sample_{sample_size}_train_{train_ratio}_outdir_"
+    else:
+        folder_path = f"dac_{prop_name}_train_{train_ratio}_outdir_"
+        if prop_name not in ["hoa", "henry"]:
+            folder_path = f"{prop_name}_train_{train_ratio}_outdir_"
     config_path = os.path.join(folder_path, "config.json")
     model_path = os.path.join(folder_path, "best_model.pt")
 
@@ -307,7 +312,7 @@ def get_prediction(
         if isinstance(act_list_x[i], torch.Tensor):
             act_list_x[i] = act_list_x[i].detach().cpu().numpy()
 
-    output_path = os.path.join(output_dir, f"sample_{sample_size}_train_{train_ratio}")
+    output_path = os.path.join(output_dir, f"start_{start_id}_sample_{sample_size}_train_{train_ratio}")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -351,14 +356,16 @@ if __name__ == "__main__":
     start_id = args.start_id
     train_ratio = args.train_ratio
 
-    if if_sample == 1:
-        # df = df.sample(n=sample_size, random_state=42)
-        df = df[start_id:(start_id+sample_size)]
-        train_df = df[:int(train_ratio*sample_size)]
-        test_df = df[int(train_ratio*sample_size):]
-    else:
-        train_df = df[:int(train_ratio*len(df))]
-        test_df = df[int(train_ratio*len(df)):]
+    # if if_sample == 1:
+    #     # df = df.sample(n=sample_size, random_state=42)
+    #     df = df[start_id:(start_id+sample_size)]
+    #     train_df = df[:int(train_ratio*sample_size)]
+    #     test_df = df[int(train_ratio*sample_size):]
+    # else:
+    #     train_df = df[:int(train_ratio*len(df))]
+    #     test_df = df[int(train_ratio*len(df)):]
+    train_df = df[:int(train_ratio*len(df))]
+    test_df = df[int(train_ratio*len(df)):]
 
 
     
