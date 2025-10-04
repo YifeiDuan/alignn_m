@@ -282,7 +282,7 @@ def main_zeo(args):
         parent_dir = os.path.dirname(struc_dir)     # The direct parent directory of the struc_dir
         output_dir = os.path.join(parent_dir, f"text_{args.text}")
 
-    if args.start:
+    if args.sample_size:
         start_id = args.start
         sample_size = args.sample_size
         end_id = start_id + sample_size
