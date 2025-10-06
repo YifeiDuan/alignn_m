@@ -80,6 +80,8 @@ if __name__ == "__main__":
         + args.if_sample
         + " --sample_size "
         + str(args.sample_size)
+        + " --start_id "
+        + str(args.start_id)
         + " --train_ratio "
         + str(args.train_ratio)
         + " --file_format "
