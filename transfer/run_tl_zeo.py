@@ -179,7 +179,8 @@ def run_regressor_mlp(args):
     for params in param_combinations:
         ### 2.3 Loop through each combination
         param_dict = dict(zip(param_names, params))
-        mlp = MLPRegressor(**param_dict, random_state=42)
+        # mlp = MLPRegressor(**param_dict, random_state=42)
+        mlp = MLPRegressor(**param_dict, random_state=20)
         mlp.fit(X_train, y_train)
         ### 2.4 Evaluate on the validation set
         y_val_pred = mlp.predict(X_val)
