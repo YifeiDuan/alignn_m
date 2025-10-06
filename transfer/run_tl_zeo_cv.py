@@ -143,7 +143,8 @@ def run_regressor_mlp(args):
     y_test = df_test["target"]
 
     # 2. Model training with hyperparam tuning
-    mlp = MLPRegressor(random_state=42)
+    # mlp = MLPRegressor(random_state=42)
+    mlp = MLPRegressor(random_state=20)
     ### 2.1 Prepare hyperparams
     param_grid = {
         'hidden_layer_sizes': [
