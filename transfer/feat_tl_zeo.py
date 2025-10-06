@@ -140,6 +140,8 @@ if __name__ == "__main__":
         + f"../text/zeoDAC_robo_start_{args.start_id}_sample_{args.sample_size}"
         + " --sample_size "
         + str(args.sample_size)
+        + " --start_id "
+        + str(args.start_id)
         + " --train_ratio "
         + str(args.train_ratio)
         + " --text "
@@ -163,6 +165,8 @@ if __name__ == "__main__":
         + f"../text/zeoDAC_chemnlp_start_{args.start_id}_sample_{args.sample_size}"
         + " --sample_size "
         + str(args.sample_size)
+        + " --start_id "
+        + str(args.start_id)
         + " --train_ratio "
         + str(args.train_ratio)
         + " --text "
