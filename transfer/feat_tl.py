@@ -162,9 +162,9 @@ if __name__ == "__main__":
         + " --input_dir "
         + f"../text/zeoDAC_chemnlp_start_{args.start_id}_sample_{args.sample_size}"
         + " --sample_size "
-        + args.sample_size
+        + str(args.sample_size)
         + " --train_ratio "
-        + args.train_ratio
+        + str(args.train_ratio)
         + " --text "
         + "chemnlp"
         + " --llm "
