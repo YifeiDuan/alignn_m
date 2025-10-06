@@ -60,6 +60,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--file_format", default="cif", help="poscar/cif/xyz/pdb file format."
     )
+    
+    parser.add_argument(
+        "--main_dir",
+        default=None,
+        help="Path to main folder.",
+    )
 
     parser.add_argument(
         "--output_dir",
@@ -86,6 +92,8 @@ if __name__ == "__main__":
         + str(args.train_ratio)
         + " --file_format "
         + args.file_format
+        + " --main_dir "
+        + args.main_dir
         + " --file_dir "
         + args.struc_file_dir
         + " --output_dir "

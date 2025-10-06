@@ -186,6 +186,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--main_dir",
+    default=None,
+    help="Path to main folder.",
+)
+
+parser.add_argument(
     "--file_dir",
     default="zeo_data/dac/MOR/output1/",
     help="Path to file.",
@@ -255,13 +261,17 @@ def get_prediction(
 
     ### Load Model ###
     if if_sample == "Y":
-        folder_path = f"dac_{prop_name}_start_{start_id}_sample_{sample_size}_train_{train_ratio}_outdir_"
+        folder_path = os.path.join(args.main_dir, 
+                                   f"dac_{prop_name}_start_{start_id}_sample_{sample_size}_train_{train_ratio}_outdir_")
         if prop_name not in ["hoa", "henry"]:
-            folder_path = f"{prop_name}_start_{start_id}_sample_{sample_size}_train_{train_ratio}_outdir_"
+            folder_path = os.path.join(args.main_dir,
+                                       f"{prop_name}_start_{start_id}_sample_{sample_size}_train_{train_ratio}_outdir_")
     else:
-        folder_path = f"dac_{prop_name}_train_{train_ratio}_outdir_"
+        folder_path = os.path.join(args.main_dir,
+                                   f"dac_{prop_name}_train_{train_ratio}_outdir_")
         if prop_name not in ["hoa", "henry"]:
-            folder_path = f"{prop_name}_train_{train_ratio}_outdir_"
+            folder_path = os.path.join(args.main_dir, 
+                                       f"{prop_name}_train_{train_ratio}_outdir_")
     config_path = os.path.join(folder_path, "config.json")
     model_path = os.path.join(folder_path, "best_model.pt")
 
