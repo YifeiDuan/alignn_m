@@ -32,8 +32,8 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--if_sample",
-        type=int,
-        default=1,
+        type=str,
+        default="Y",
         help="0: no sampling; 1: sampling",
     )
 

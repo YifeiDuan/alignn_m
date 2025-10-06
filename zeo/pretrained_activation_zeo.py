@@ -156,8 +156,8 @@ parser.add_argument(
 
 parser.add_argument(
     "--if_sample",
-    type=int,
-    default=1,
+    type=str,
+    default="Y",
     help="0: no sampling; 1: sampling",
 )
 
@@ -254,7 +254,7 @@ def get_prediction(
     cutoff = args.cutoff
 
     ### Load Model ###
-    if if_sample == 1:
+    if if_sample == "Y":
         folder_path = f"dac_{prop_name}_start_{start_id}_sample_{sample_size}_train_{train_ratio}_outdir_"
         if prop_name not in ["hoa", "henry"]:
             folder_path = f"{prop_name}_start_{start_id}_sample_{sample_size}_train_{train_ratio}_outdir_"
