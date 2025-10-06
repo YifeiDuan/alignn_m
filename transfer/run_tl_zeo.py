@@ -115,7 +115,7 @@ def run_regressor_rf(args):
     mae_train = mean_absolute_error(y_train, y_train_pred)
     print(f"Train MAE: {mae_train}")
     train_json = {
-        "ids": list(df_train["id"]),
+        "ids": list(df_train["jid"]),
         "y_true": list(y_train),
         "y_pred": list(y_train_pred),
         "train_mae": mae_train
@@ -127,7 +127,7 @@ def run_regressor_rf(args):
     mae_test = mean_absolute_error(y_test, y_test_pred)
     print(f"Test MAE: {mae_test}")
     test_json = {
-        "ids": list(df_test["id"]),
+        "ids": list(df_test["jid"]),
         "y_true": list(y_test),
         "y_pred": list(y_test_pred),
         "test_mae": mae_test
@@ -213,7 +213,7 @@ def run_regressor_mlp(args):
     mae_train = mean_absolute_error(y_train, y_train_pred)
     print(f"Train MAE: {mae_train}")
     train_json = {
-        "ids": list(df_train["id"]),
+        "ids": list(df_train["jid"]),
         "y_true": list(y_train),
         "y_pred": list(y_train_pred),
         "train_mae": mae_train
@@ -225,7 +225,7 @@ def run_regressor_mlp(args):
     mae_test = mean_absolute_error(y_test, y_test_pred)
     print(f"Test MAE: {mae_test}")
     test_json = {
-        "ids": list(df_test["id"]),
+        "ids": list(df_test["jid"]),
         "y_true": list(y_test),
         "y_pred": list(y_test_pred),
         "test_mae": mae_test
