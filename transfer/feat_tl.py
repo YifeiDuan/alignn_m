@@ -106,10 +106,10 @@ if __name__ == "__main__":
     ##### 2. Prepare holistic graph embedding
     feat_prep(
         dataset = args.prop_name,
-        feat_dir = "../zeo",
+        feat_dir = args.main_dir,
         id_prop_dir = args.struc_file_dir,
         id_prop_file = args.id_prop_filename,
-        start_di = args.start_id,
+        start_id = args.start_id,
         sample_size = args.sample_size,
         train_ratio = args.train_ratio,
         identifier = 'jid',
@@ -117,7 +117,8 @@ if __name__ == "__main__":
         path2 = ['x', 'y', 'z'],
         path3 = [9, 9, 5]
     )
-    feat_path = f"embed_dac_{args.prop_name}/start_{args.start_id}_sample_{args.sample_size}_train_{args.train_ratio}"
+    feat_path = os.path.join(args.main_dir,
+                             f"embed_dac_{args.prop_name}/start_{args.start_id}_sample_{args.sample_size}_train_{args.train_ratio}")
     id_prop_file_path = os.path.join(os.path.join(args.struc_file_dir, args.prop_name), args.id_prop_filename)
     split_combined_feat(
         feat_path = feat_path,
