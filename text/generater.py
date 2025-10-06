@@ -287,7 +287,6 @@ def main_zeo(args):
         sample_size = args.sample_size
         end_id = start_id + sample_size
         df = pd.read_csv(os.path.join(struc_dir, f"hoa/id_prop_random_{start_id}_{end_id}.csv"))
-        output_dir = output_dir + f"_start_{start_id}_sample_{sample_size}"
     else:
         df = pd.read_csv(os.path.join(struc_dir, "hoa/id_prop_random.csv"))
 
