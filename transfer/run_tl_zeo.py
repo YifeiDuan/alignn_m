@@ -57,7 +57,7 @@ def run_regressor_rf(args):
     df_base_name = f"dataset_{args.gnn}_{args.llm}_{args.text}_prop_{session_name}"
     if "text_only" in session_name:
         substring = session_name.split("text_only_")[-1]
-        df_base_name = f"dataset_{args.gnn}_{args.llm}_{args.text}_prop_{substring}"
+        df_base_name = f"dataset_{args.llm}_{args.text}_prop_{substring}"
     df_train = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_train.csv")).reset_index(drop=True)
     df_val   = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_val.csv")).reset_index(drop=True)
     df_test  = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_test.csv")).reset_index(drop=True)
@@ -149,7 +149,7 @@ def run_regressor_mlp(args):
     df_base_name = f"dataset_{args.gnn}_{args.llm}_{args.text}_prop_{session_name}"
     if "text_only" in session_name:
         substring = session_name.split("text_only_")[-1]
-        df_base_name = f"dataset_{args.gnn}_{args.llm}_{args.text}_prop_{substring}"
+        df_base_name = f"dataset_{args.llm}_{args.text}_prop_{substring}"
     df_train = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_train.csv")).reset_index(drop=True)
     df_val   = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_val.csv")).reset_index(drop=True)
     df_test  = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_test.csv")).reset_index(drop=True)
