@@ -337,11 +337,11 @@ def prepare_dataset_zeo_text_only(args, prop="dac_hoa"):
     df_embed = pd.read_csv(embed_file[0], index_col = 0).reset_index().rename(columns={'index': 'ids'})
 
     # 2. Prepare save names
-    dataset_filename = f"dataset_{args.text}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+    dataset_filename = f"dataset_{args.llm}_{args.text}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
     if args.skip_sentence is not None:
-        dataset_filename = f"dataset_{args.text}_skip_{args.skip_sentence}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+        dataset_filename = f"dataset_{args.llm}_{args.text}_skip_{args.skip_sentence}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
     if args.mask_words is not None:
-        dataset_filename = f"dataset_{args.text}_mask_{args.mask_words}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+        dataset_filename = f"dataset_{args.llm}_{args.text}_mask_{args.mask_words}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
 
     # 3. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
     data_save_dir = f"./data/text_only_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
