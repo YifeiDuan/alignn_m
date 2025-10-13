@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(description='run ml regressors on dataset')
 parser.add_argument('--input_dir', help='input data directory', default="./data", type=str,required=False)
 parser.add_argument('--session_name', help="specify property", default='dac_hoa_sample_200_train_0.75', required=False)
 parser.add_argument('--model', help='model to train', choices=['rf', 'mlp'], default='mlp', type=str, required=False)
-parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo'], default='raw', type=str, required=False)
+parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'rand'], default='raw', type=str, required=False)
 parser.add_argument('--llm', help='pre-trained llm embedding to use', default='matbert-base-cased', type=str,required=False)
 parser.add_argument('--gnn', help='pre-trained gnn embedding to use', default='alignn', type=str,required=False)
 parser.add_argument('--output_dir', help='path to the save output embedding', default="./results", type=str, required=False)
@@ -58,6 +58,9 @@ def run_regressor_rf(args):
     if "text_only" in session_name:
         substring = session_name.split("text_only_")[-1]
         df_base_name = f"dataset_{args.llm}_{args.text}_prop_{substring}"
+    if "randtext" in session_name:
+        substring = session_name.split("text_only_")[-1]
+        df_base_name = f"dataset_{args.llm}_randtext_prop_{substring}"
     df_train = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_train.csv")).reset_index(drop=True)
     df_val   = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_val.csv")).reset_index(drop=True)
     df_test  = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_test.csv")).reset_index(drop=True)
@@ -150,6 +153,9 @@ def run_regressor_mlp(args):
     if "text_only" in session_name:
         substring = session_name.split("text_only_")[-1]
         df_base_name = f"dataset_{args.llm}_{args.text}_prop_{substring}"
+    if "randtext" in session_name:
+        substring = session_name.split("text_only_")[-1]
+        df_base_name = f"dataset_{args.llm}_randtext_prop_{substring}"
     df_train = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_train.csv")).reset_index(drop=True)
     df_val   = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_val.csv")).reset_index(drop=True)
     df_test  = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_test.csv")).reset_index(drop=True)
