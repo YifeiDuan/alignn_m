@@ -59,7 +59,7 @@ def run_regressor_rf(args):
         substring = session_name.split("text_only_")[-1]
         df_base_name = f"dataset_{args.llm}_{args.text}_prop_{substring}"
     if "randtext" in session_name:
-        substring = session_name.split("text_only_")[-1]
+        substring = session_name.split("randtext_")[-1]
         df_base_name = f"dataset_{args.llm}_randtext_prop_{substring}"
     df_train = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_train.csv")).reset_index(drop=True)
     df_val   = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_val.csv")).reset_index(drop=True)
@@ -154,7 +154,7 @@ def run_regressor_mlp(args):
         substring = session_name.split("text_only_")[-1]
         df_base_name = f"dataset_{args.llm}_{args.text}_prop_{substring}"
     if "randtext" in session_name:
-        substring = session_name.split("text_only_")[-1]
+        substring = session_name.split("randtext_")[-1]
         df_base_name = f"dataset_{args.llm}_randtext_prop_{substring}"
     df_train = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_train.csv")).reset_index(drop=True)
     df_val   = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_val.csv")).reset_index(drop=True)
