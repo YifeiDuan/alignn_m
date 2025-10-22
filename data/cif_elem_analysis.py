@@ -6,7 +6,7 @@ import wget
 import pandas as pd
 import numpy as np
 
-def extract_compositions_from_cifs(cif_dir, output_csv="compositions.csv"):
+def extract_compositions_from_cifs(cif_dir, output_path="compositions.csv"):
     records = []
     all_elements = set()
 
@@ -27,7 +27,7 @@ def extract_compositions_from_cifs(cif_dir, output_csv="compositions.csv"):
                 all_elements.add(el)
             records.append(data)
         except Exception as e:
-            print(f"⚠️ Could not parse {fname}: {e}")
+            print(f"Could not parse {fname}: {e}")
 
     if not records:
         print("No valid CIF files found.")
@@ -42,6 +42,7 @@ def extract_compositions_from_cifs(cif_dir, output_csv="compositions.csv"):
 
     # Step 3: Create DataFrame and save
     df = pd.DataFrame(records)
-    df = df[["filename", "formula"] + all_elements]
-    df.to_csv(output_csv, index=False)
-    print(f"✅ Saved {len(df)} entries to {output_csv}")
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    df.to_csv(output_path, index=False)
+    print(f"Saved {len(df)} entries to {output_path}")
