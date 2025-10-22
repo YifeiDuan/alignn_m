@@ -42,7 +42,8 @@ def extract_compositions_from_cifs(cif_dir, output_path="compositions.csv"):
 
     # Step 3: Create DataFrame and save
     df = pd.DataFrame(records)
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    output_dir = os.path.dirname(output_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     df.to_csv(output_path, index=False)
     print(f"Saved {len(df)} entries to {output_path}")
