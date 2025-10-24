@@ -490,10 +490,11 @@ class Graph(object):
         # TODO: modify feat to incorporate node-level textual embedding
         for ii, s in enumerate(atoms.elements):
             ## NOTE: s is for a single element
-            feat = list(get_node_attributes(s, atom_features=atom_features))
+            atom_feat = list(get_node_attributes(s, atom_features=atom_features))
+            
             ## TODO: concat textual embeddings to feat
-            atom_number = get_node_attributes(s, atom_features="atomic_number")
-            atom_text_feat = 
+            atom_text_feat = list(atom_embed_df[atom_embed_df["element"]=="Si"].drop(columns=["element"]).iloc[0])
+            feat = atom_feat + atom_text_feat
             # if include_prdf_angles:
             #    feat=feat+list(prdf[ii])+list(adf[ii])
             sps_features.append(feat)
