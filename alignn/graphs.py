@@ -438,6 +438,93 @@ class Graph(object):
             return g, lg
         else:
             return g
+        
+    
+    @staticmethod
+    def atom_dgl_multigraph_tag(
+        atoms=None,
+        neighbor_strategy="k-nearest",
+        cutoff=8.0,
+        max_neighbors=12,
+        atom_features="cgcnn",
+        max_attempts=3,
+        id: Optional[str] = None,
+        compute_line_graph: bool = True,
+        use_canonize: bool = True,
+        # use_canonize: bool = False,
+        use_lattice_prop: bool = False,
+        cutoff_extra=3.5,
+    ):
+        """Obtain a DGLGraph for Atoms object."""
+        # print('id',id)
+        if neighbor_strategy == "k-nearest":
+            edges = nearest_neighbor_edges(
+                atoms=atoms,
+                cutoff=cutoff,
+                max_neighbors=max_neighbors,
+                id=id,
+                use_canonize=use_canonize,
+            )
+            u, v, r = build_undirected_edgedata(atoms, edges)
+        elif neighbor_strategy == "radius_graph":
+            # print('HERE')
+            # import sys
+            # sys.exit()
+            u, v, r = radius_graph(
+                atoms, cutoff=cutoff, cutoff_extra=cutoff_extra
+            )
+        else:
+            raise ValueError("Not implemented yet", neighbor_strategy)
+        # elif neighbor_strategy == "voronoi":
+        #    edges = voronoi_edges(structure)
+
+        # u, v, r = build_undirected_edgedata(atoms, edges)
+
+        # build up atom attribute tensor
+        sps_features = []
+        for ii, s in enumerate(atoms.elements):
+            feat = list(get_node_attributes(s, atom_features=atom_features))
+            # if include_prdf_angles:
+            #    feat=feat+list(prdf[ii])+list(adf[ii])
+            sps_features.append(feat)
+        sps_features = np.array(sps_features)
+        node_features = torch.tensor(sps_features).type(
+            torch.get_default_dtype()
+        )
+        g = dgl.graph((u, v))
+        # TODO: modify node_features to incorporate node-level textual embedding
+        g.ndata["atom_features"] = node_features
+        g.edata["r"] = r
+        vol = atoms.volume
+        g.ndata["V"] = torch.tensor([vol for ii in range(atoms.num_atoms)])
+        g.ndata["coords"] = torch.tensor(atoms.cart_coords)
+        if use_lattice_prop:
+            lattice_prop = np.array(
+                [atoms.lattice.lat_lengths(), atoms.lattice.lat_angles()]
+            ).flatten()
+            # print('lattice_prop',lattice_prop)
+            g.ndata["extra_features"] = torch.tensor(
+                [lattice_prop for ii in range(atoms.num_atoms)]
+            ).type(torch.get_default_dtype())
+        # print("g", g)
+        # g.edata["V"] = torch.tensor(
+        #    [vol for ii in range(g.num_edges())]
+        # )
+        # lattice_mat = atoms.lattice_mat
+        # g.edata["lattice_mat"] = torch.tensor(
+        #    [lattice_mat for ii in range(g.num_edges())]
+        # )
+
+        if compute_line_graph:
+            # construct atomistic line graph
+            # (nodes are bonds, edges are bond pairs)
+            # and add bond angle cosines as edge features
+            lg = g.line_graph(shared=True)
+            lg.apply_edges(compute_bond_cosines)
+            return g, lg
+        else:
+            return g
+        
 
     @staticmethod
     def from_atoms(

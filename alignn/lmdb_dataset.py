@@ -141,7 +141,8 @@ def get_torch_dataset(
     with env.begin(write=True) as txn:
         for idx, (d) in tqdm(enumerate(dataset), total=len(dataset)):
             ids.append(d[id_tag])
-            # g, lg = Graph.atom_dgl_multigraph(
+            # TODO: TAG - modify Graph.atom_dgl_multigraph_tag
+            # g, lg = graphs.Graph.atom_dgl_multigraph(
             g = Graph.atom_dgl_multigraph(
                 Atoms.from_dict(d["atoms"]),
                 cutoff=float(cutoff),
