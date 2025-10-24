@@ -454,6 +454,8 @@ class Graph(object):
         # use_canonize: bool = False,
         use_lattice_prop: bool = False,
         cutoff_extra=3.5,
+        text_embed_path="tag/atom_text_embeddings/llmprior.csv"   
+        # TODO: modify other .py accordingly: tag=true, text_embed_path="..."
     ):
         """Obtain a DGLGraph for Atoms object."""
         # print('id',id)
@@ -480,6 +482,9 @@ class Graph(object):
 
         # u, v, r = build_undirected_edgedata(atoms, edges)
 
+        # TODO: Load atom text embeddings
+        atom_embed_df = pd.read_csv(text_embed_path)
+
         # build up atom attribute tensor
         sps_features = []
         # TODO: modify feat to incorporate node-level textual embedding
@@ -487,6 +492,8 @@ class Graph(object):
             ## NOTE: s is for a single element
             feat = list(get_node_attributes(s, atom_features=atom_features))
             ## TODO: concat textual embeddings to feat
+            atom_number = get_node_attributes(s, atom_features="atomic_number")
+            atom_text_feat = 
             # if include_prdf_angles:
             #    feat=feat+list(prdf[ii])+list(adf[ii])
             sps_features.append(feat)
