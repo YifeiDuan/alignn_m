@@ -482,8 +482,11 @@ class Graph(object):
 
         # build up atom attribute tensor
         sps_features = []
+        # TODO: modify feat to incorporate node-level textual embedding
         for ii, s in enumerate(atoms.elements):
+            ## NOTE: s is for a single element
             feat = list(get_node_attributes(s, atom_features=atom_features))
+            ## TODO: concat textual embeddings to feat
             # if include_prdf_angles:
             #    feat=feat+list(prdf[ii])+list(adf[ii])
             sps_features.append(feat)
@@ -492,7 +495,6 @@ class Graph(object):
             torch.get_default_dtype()
         )
         g = dgl.graph((u, v))
-        # TODO: modify node_features to incorporate node-level textual embedding
         g.ndata["atom_features"] = node_features
         g.edata["r"] = r
         vol = atoms.volume
