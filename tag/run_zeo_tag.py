@@ -131,12 +131,18 @@ if __name__ == "__main__":
         default=1,
         help="whether to run tag",
     )
+    parser.add_argument(
+        "--config_file_name",
+        default="config_example_textpca100.json",
+        help="path to the id_prop.csv file",
+    )
 
     args = parser.parse_args(sys.argv[1:])
 
     ##### Load config file that contains model hyperparams #####
+    config_file_name = args.config_file_name
     config_template = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "config_example.json")
+        os.path.join(os.path.dirname(__file__), config_file_name)
     )
     config = loadjson(config_template)
 

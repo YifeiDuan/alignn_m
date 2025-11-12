@@ -164,7 +164,7 @@ def get_torch_dataset(
                     use_canonize=use_canonize,
                     cutoff_extra=cutoff_extra,
                     # TODO: Modify text_embed_path
-                    text_embed_path="atom_text_embeddings/llmprior.csv"
+                    text_embed_path="atom_text_embeddings/llmprior_pca100.csv"
                 )
             if line_graph:
                 g, lg = g
