@@ -118,6 +118,7 @@ def get_id_train_val_test(
 def get_train_val_loaders(
     dataset: str = "dft_3d",
     dataset_array=None,
+    tag=False,  # Default tag=False
     target: str = "formation_energy_peratom",
     target_atomwise: str = "",
     target_grad: str = "",
@@ -370,7 +371,8 @@ def get_train_val_loaders(
         # TODO: TAG - modify lmdb_dataset.get_torch_dataset
         train_data = get_torch_dataset(
             dataset=dataset_train,
-            id_tag=id_tag,
+            tag=tag,    # Flag for whether to use tag, i.e. adding text attributes for atoms
+            id_tag=id_tag,  # id_tag is not relevant to text-attributed-graph (tag)
             atom_features=atom_features,
             target=target,
             target_atomwise=target_atomwise,
@@ -393,7 +395,8 @@ def get_train_val_loaders(
         val_data = (
             get_torch_dataset(
                 dataset=dataset_val,
-                id_tag=id_tag,
+                tag=tag,    # Flag for whether to use tag, i.e. adding text attributes for atoms
+                id_tag=id_tag,  # id_tag is not relevant to text-attributed-graph (tag)
                 atom_features=atom_features,
                 target=target,
                 target_atomwise=target_atomwise,
@@ -419,7 +422,8 @@ def get_train_val_loaders(
         test_data = (
             get_torch_dataset(
                 dataset=dataset_test,
-                id_tag=id_tag,
+                tag=tag,    # Flag for whether to use tag, i.e. adding text attributes for atoms
+                id_tag=id_tag,  # id_tag is not relevant to text-attributed-graph (tag)
                 atom_features=atom_features,
                 target=target,
                 target_atomwise=target_atomwise,

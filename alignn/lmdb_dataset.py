@@ -97,6 +97,7 @@ class TorchLMDBDataset(Dataset):
 
 def get_torch_dataset(
     dataset=[],
+    tag=False,  # Flag for whether to use tag text attributes for atoms
     id_tag="jid",
     target="",
     target_atomwise="",
@@ -142,16 +143,27 @@ def get_torch_dataset(
         for idx, (d) in tqdm(enumerate(dataset), total=len(dataset)):
             ids.append(d[id_tag])
             # TODO: TAG - modify Graph.atom_dgl_multigraph_tag
-            # g, lg = graphs.Graph.atom_dgl_multigraph(
-            g = Graph.atom_dgl_multigraph(
-                Atoms.from_dict(d["atoms"]),
-                cutoff=float(cutoff),
-                max_neighbors=max_neighbors,
-                atom_features=atom_features,
-                compute_line_graph=line_graph,
-                use_canonize=use_canonize,
-                cutoff_extra=cutoff_extra,
-            )
+            if tag is False:
+                # g, lg = graphs.Graph.atom_dgl_multigraph(
+                g = Graph.atom_dgl_multigraph(
+                    Atoms.from_dict(d["atoms"]),
+                    cutoff=float(cutoff),
+                    max_neighbors=max_neighbors,
+                    atom_features=atom_features,
+                    compute_line_graph=line_graph,
+                    use_canonize=use_canonize,
+                    cutoff_extra=cutoff_extra,
+                )
+            else:   # If: tag=True
+                g = Graph.atom_dgl_multigraph_tag(
+                    Atoms.from_dict(d["atoms"]),
+                    cutoff=float(cutoff),
+                    max_neighbors=max_neighbors,
+                    atom_features=atom_features,
+                    compute_line_graph=line_graph,
+                    use_canonize=use_canonize,
+                    cutoff_extra=cutoff_extra,
+                )
             if line_graph:
                 g, lg = g
             label = torch.tensor(d[target]).type(torch.get_default_dtype())

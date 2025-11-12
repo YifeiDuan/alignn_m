@@ -493,7 +493,7 @@ class Graph(object):
             atom_feat = list(get_node_attributes(s, atom_features=atom_features))
             
             ## TODO: concat textual embeddings to feat
-            atom_text_feat = list(atom_embed_df[atom_embed_df["element"]=="Si"].drop(columns=["element"]).iloc[0])
+            atom_text_feat = list(atom_embed_df[atom_embed_df["element"]==s].drop(columns=["element"]).iloc[0])
             feat = atom_feat + atom_text_feat
             # if include_prdf_angles:
             #    feat=feat+list(prdf[ii])+list(adf[ii])
