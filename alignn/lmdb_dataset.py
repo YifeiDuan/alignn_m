@@ -163,6 +163,8 @@ def get_torch_dataset(
                     compute_line_graph=line_graph,
                     use_canonize=use_canonize,
                     cutoff_extra=cutoff_extra,
+                    # TODO: Modify text_embed_path
+                    text_embed_path="atom_text_embeddings/llmprior.csv"
                 )
             if line_graph:
                 g, lg = g
