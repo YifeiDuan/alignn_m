@@ -10,7 +10,7 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 
-# os.environ["HUGGING_FACE_HUB_TOKEN"] = YOUR_CODE
+# os.environ["HUGGING_FACE_HUB_TOKEN"] = YOUR_TOKEN
 
 def clear_cache():
   if torch.cuda.is_available():
@@ -25,6 +25,7 @@ device = get_device_map()
 
 device
 
+CIF_DIR = "cif_files/MOR"
 
 TEMP = 0.01
 MAX_NEW_TOKENS = 1000 #change accordingly
@@ -83,8 +84,6 @@ if __name__ == "__main__":
     )
 
     llm = HuggingFacePipeline(pipeline=text_pipeline, model_kwargs={"device":device})
-
-    CIF_DIR = "cif_files/MOR"
 
     files = glob.glob(f"{CIF_DIR}/*.cif")
 
