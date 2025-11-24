@@ -10,6 +10,7 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 
+# os.environ["HUGGING_FACE_HUB_TOKEN"] = YOUR_CODE
 
 def clear_cache():
   if torch.cuda.is_available():
