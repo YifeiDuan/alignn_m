@@ -43,6 +43,7 @@ parser.add_argument('--database', help='the source database of the property data
 parser.add_argument('--input_dir', help='input text data directory', default="../text/matbench_jdft2d", type=str,required=False)   # For text embeddings
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'], default='robo', type=str, required=False)
 parser.add_argument('--llm', help='pre-trained llm to use', default='gpt2', type=str,required=False)
+parser.add_argument('--gen_llm', help='llm used to generate the text', default='llama-3-8B-instruct', type=str,required=False)
 parser.add_argument('--save_data', action='store_true')
 parser.add_argument('--gnn_only', action='store_true')
 parser.add_argument('--gnn_file_dir', help='pretrained gnn embedding directory', default="../alignn/embed_matbench_jdft2d/organized", type=str, required=False)
@@ -287,7 +288,6 @@ def prepare_dataset_zeo(args, prop="dac_hoa"):
     if not os.path.exists(data_save_dir):
         os.makedirs(data_save_dir)
 
-    # TODO: Process split-specific merging
     if args.gnn_file_dir:
         gnn_file_dir = args.gnn_file_dir      # direct parent dir of the gnn embedding file
 
@@ -304,6 +304,55 @@ def prepare_dataset_zeo(args, prop="dac_hoa"):
         save_path = os.path.join(data_save_dir, f"{dataset_filename}_{subset}.csv")
         df_subset.to_csv(save_path)
         logging.info(f"Saved subset dataset to {save_path}")
+
+
+# TODO: Run this
+def prepare_dataset_zeo_llm(args, prop="dac_hoa"):
+    sample_size = args.sample_size
+    start_id = args.start_id
+    train_ratio = args.train_ratio
+
+    # 1. Load text embeddings
+    text_embed_subdir = f"embedding_*"
+    file_path = f"embeddings_{args.gen_llm}_{args.llm.replace('/', '_')}_*.csv"
+    if args.input_dir:
+        file_path = os.path.join(text_embed_subdir, file_path)
+        file_path = os.path.join(args.input_dir, file_path)
+        print(file_path)    # Should be something like "YY/text/matbench_XX/embedding_XX/embeddings_MM_robo_*.csv"
+    embed_file = glob.glob(file_path)
+
+    
+    logging.info(f"Found embedding file: {embed_file}")
+    df_embed = pd.read_csv(embed_file[0], index_col = 0).reset_index().rename(columns={'index': 'ids'})
+
+    # 2. Prepare save names
+    if args.gnn_only:
+        dataset_filename = f"dataset_alignn_only_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+    else:
+        dataset_filename = f"dataset_alignn_{args.gen_llm}_{args.llm.replace('/', '_')}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+    
+    # 3. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
+    data_save_dir = f"./data/{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+    if not os.path.exists(data_save_dir):
+        os.makedirs(data_save_dir)
+
+    if args.gnn_file_dir:
+        gnn_file_dir = args.gnn_file_dir      # direct parent dir of the gnn embedding file
+
+
+    for subset in ["train", "val", "test"]:
+        df_subset = pd.read_csv(os.path.join(gnn_file_dir, f"data_{subset}.csv"))
+        df_subset = df_subset.merge(df_embed, how='inner', left_on="jid", right_on="ids", suffixes=('_gnn', '_lm'))
+        print(df_subset.head())
+        df_subset["target"] = df_subset.pop("target")       # Reordering columns, "matbench_PROP" to the last col
+        df_subset["ids"] = df_subset.pop("ids")     # Reordering columns, "ids" to the last col
+        df_subset["jid"] = df_subset.pop("jid")     # Reordering columns, "id" to the last col
+        df_subset = df_subset.drop(df_subset.filter(like='Unnamed').columns, axis=1)
+        ### Save the subset of merged multimodal data
+        save_path = os.path.join(data_save_dir, f"{dataset_filename}_{subset}.csv")
+        df_subset.to_csv(save_path)
+        logging.info(f"Saved subset dataset to {save_path}")
+
 
 
 def prepare_dataset_zeo_text_only(args, prop="dac_hoa"):
@@ -475,6 +524,9 @@ if __name__ == "__main__":
     elif args.database == "zeo":
         prop = args.prop
         prepare_dataset_zeo(args, prop)
+    elif args.database == "zeo_llm":
+        prop = args.prop
+        prepare_dataset_zeo_llm(args, prop)
     elif args.database == "zeo_text":
         prop = args.prop
         prepare_dataset_zeo_text_only(args, prop)

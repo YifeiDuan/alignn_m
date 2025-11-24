@@ -58,6 +58,7 @@ def gen_txt(cif_id, cif_dir="cif_files/MOR"):
 
     return response
 
+# TODO: Run this
 def split_df(all_txt_df_path, txt_dir, llm="llama-3-8B-instruct"):
    all_txt_df = pd.read_csv(all_txt_df_path)
    for start_id in range(0, 2000, 200):
