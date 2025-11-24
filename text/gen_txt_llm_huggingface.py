@@ -46,7 +46,7 @@ def answer_llama(question):
     return raw_answer
 
 def gen_txt(cif_id, cif_dir="cif_files/MOR"):
-    cif = Path(os.path.join(cif_dir, "MOR_0.cif")).read_text()
+    cif = Path(os.path.join(cif_dir, f"{cif_id}.cif")).read_text()
 
     question = f"Here is a cif file for a zeolite structure. Provide as much reliable information as possible for this material in descriptive sentences.\n {cif} \n **Answer**: "
 
@@ -83,16 +83,16 @@ if __name__ == "__main__":
 
     llm = HuggingFacePipeline(pipeline=text_pipeline, model_kwargs={"device":device})
 
-    cif_dir = "cif_files/MOR"
+    CIF_DIR = "cif_files/MOR"
 
-    files = glob.glob(f"{cif_dir}/*.cif")
+    files = glob.glob(f"{CIF_DIR}/*.cif")
 
     records = []
 
     for file in tqdm(files):
         cif_id = os.path.basename(file).split(".cif")[0]
         response = gen_txt(cif_id=cif_id,
-                          cif_dir=cif_dir)
+                          cif_dir=CIF_DIR)
         records.append(
             {
                 "cif_id": cif_id,
