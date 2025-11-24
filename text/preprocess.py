@@ -41,7 +41,8 @@ parser.add_argument('--database', help='the source database of the property data
 parser.add_argument('--label', help='output variable', default=None, type=str,required=False)
 # parser.add_argument('--input', help='input attributes set', default=None, type=str, required=False)
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'],default='raw', type=str, required=False)
-parser.add_argument('--llm', help='pre-trained llm to use', default='gpt2', type=str,required=False)
+parser.add_argument('--llm', help='pre-trained llm to use for embedding', default='gpt2', type=str,required=False)
+parser.add_argument('--gen_llm', help='llm used to generate the text', default='llama-3-8B-instruct', type=str,required=False)
 parser.add_argument('--output_dir', help='path to the save output embedding', default="./data/embeddings//", type=str, required=False)
 parser.add_argument('--cache_csv', help='path that stores text', default=None, type=str, required=False)
 parser.add_argument('--skip_sentence', help='text topic to skip', default=None, required=False)
@@ -558,6 +559,100 @@ def preprocess_data_zeo(args):
         file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_skip_{args.skip_sentence}_{n}.csv"
     if args.mask_words is not None:
         file_path = f"embeddings_{args.llm.replace('/', '_')}_{args.text}_mask_{args.mask_words[0]}_{n}.csv"
+    if args.output_dir:
+        file_path = os.path.join(args.output_dir, file_path) 
+    df.to_csv(file_path)
+    logging.info(f"Saved to {file_path}")
+
+
+
+def preprocess_data_zeo_llm(args):
+
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
+    # 1. Load Tokenizer
+    llm = args.llm
+    gen_llm = args.gen_llm
+    ### by default: llm = "matbert-base-cased"
+    ### for this model, we need to download it first as in download_llm.ipynb
+    if llm == "matbert-base-cased":
+        tokenizer = BertTokenizerFast.from_pretrained(os.path.join("./matbert", llm), do_lower_case=False)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(llm)
+    # 2. Load Model
+    device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
+    if "gpt2" in llm.lower():
+        model = GPT2Model.from_pretrained(llm)
+    elif "bert" in llm.lower():
+        try:
+            model = BertModel.from_pretrained(llm)
+        except:
+            model = BertModel.from_pretrained(os.path.join("./matbert", llm))
+        
+    elif "opt" in llm.lower():
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-6.7b", 
+            device_map='auto',
+            quantization_config=quantization_config
+        )
+
+    model.to(device)
+
+    # 3. Load generated text data
+    # 4. Get vectorized embeddings
+    embeddings = []
+    samples=[]
+    # print(model)
+    max_token_length = model.config.max_position_embeddings     # config loaded along with the model
+    logging.info(f"Max token length: {max_token_length}")
+    if not args.cache_csv:
+        raise Exception("please specify cache_csv: the csv file with generated text descriptions for each compound")
+    
+    assert args.text in args.cache_csv
+    df_text = pd.read_csv(args.cache_csv, index_col = 0)
+
+    for num, row in tqdm(df_text.iterrows(), total=len(df_text), desc="Inferring vectorized text embeddings"):
+
+        jid = row["cif_if"]
+        text = row["response"]
+       
+
+        inputs = tokenizer(text, max_length=1024, truncation=True, return_tensors="pt").to(device)
+        if len(inputs['input_ids'][0]) <= max_token_length:
+            with torch.no_grad():
+                with torch.cuda.amp.autocast():
+                    output = model(**inputs)
+            if device.type == 'cuda':
+                emb = output.last_hidden_state.mean(dim=1).cpu().numpy().flatten()
+            else:
+                emb = output.last_hidden_state.mean(dim=1).numpy().flatten()
+            embeddings.append(emb)
+            samples.append(jid)
+
+        # if (num+1)%50==0:
+        #     json_embeddings = [list(embedding) for embedding in embeddings]
+        #     json_embeddings = [[np.float64(val) for val in json_embedding] for json_embedding in json_embeddings]
+        #     sample_embeddings = {
+        #         "jid": samples,
+        #         "embedding": json_embeddings
+        #     }
+        #     with open(f"{args.output_dir}/sample_embeddings.json", 'w') as file:
+        #         json.dump(sample_embeddings, file, indent=4)
+
+
+    # 6. Save embeddings as .csv
+    embeddings = np.vstack(embeddings)
+    #labels = np.array([entry['exfoliation_energy'] for entry in dat])
+
+
+    n = len(embeddings)
+    assert n == len(samples)
+    df = pd.DataFrame(embeddings, index=samples)
+
+    n = len(df)
+    file_path = f"embeddings_{gen_llm}_{args.llm.replace('/', '_')}_{n}.csv"
     if args.output_dir:
         file_path = os.path.join(args.output_dir, file_path) 
     df.to_csv(file_path)

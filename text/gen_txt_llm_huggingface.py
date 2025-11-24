@@ -58,6 +58,22 @@ def gen_txt(cif_id, cif_dir="cif_files/MOR"):
 
     return response
 
+def split_df(all_txt_df_path, txt_dir, llm="llama-3-8B-instruct"):
+   all_txt_df = pd.read_csv(all_txt_df_path)
+   for start_id in range(0, 2000, 200):
+        robo_df_dir = os.path.join(txt_dir, f"zeoDAC_robo_start_{start_id}_sample_200")
+        robo_df = pd.read_csv(os.path.join(robo_df_dir, f"robo_{start_id}_None_skip_none.csv"))
+
+        split_jid = list(robo_df["jid"])
+
+        split_df = all_txt_df[(all_txt_df["cif_if"].isin(split_jid))]
+
+        save_dir = f"zeoDAC_{llm}_start_{start_id}_sample_200"
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+        split_df.to_csv(os.path.join(save_dir, f"{llm}_{start_id}.csv"), index=False)
+
 if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True)
     model = AutoModelForCausalLM.from_pretrained(
