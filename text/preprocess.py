@@ -619,16 +619,16 @@ def preprocess_data_zeo_llm(args):
        
 
         inputs = tokenizer(text, max_length=4096, truncation=True, return_tensors="pt").to(device)
-        if len(inputs['input_ids'][0]) <= max_token_length:
-            with torch.no_grad():
-                with torch.cuda.amp.autocast():
-                    output = model(**inputs)
-            if device.type == 'cuda':
-                emb = output.last_hidden_state.mean(dim=1).cpu().numpy().flatten()
-            else:
-                emb = output.last_hidden_state.mean(dim=1).numpy().flatten()
-            embeddings.append(emb)
-            samples.append(jid)
+        # if len(inputs['input_ids'][0]) <= max_token_length:
+        with torch.no_grad():
+            with torch.cuda.amp.autocast():
+                output = model(**inputs)
+        if device.type == 'cuda':
+            emb = output.last_hidden_state.mean(dim=1).cpu().numpy().flatten()
+        else:
+            emb = output.last_hidden_state.mean(dim=1).numpy().flatten()
+        embeddings.append(emb)
+        samples.append(jid)
 
         # if (num+1)%50==0:
         #     json_embeddings = [list(embedding) for embedding in embeddings]
