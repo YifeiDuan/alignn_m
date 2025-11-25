@@ -614,7 +614,7 @@ def preprocess_data_zeo_llm(args):
 
     for num, row in tqdm(df_text.iterrows(), total=len(df_text), desc="Inferring vectorized text embeddings"):
 
-        jid = row["cif_if"]
+        jid = row["cif_id"]
         text = row["response"]
        
 
