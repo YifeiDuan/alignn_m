@@ -25,13 +25,14 @@ device = get_device_map()
 
 device
 
-CIF_DIR = "cif_files/MOR"
+BASE_DF_PATH = "robo_200_2000.csv"
 
 TEMP = 0.01
 MAX_NEW_TOKENS = 1000 #change accordingly
 
 MODEL_NAME    = 'aleynabeste/ZeoDapModelLR1e5'
 MODEL_ID  =  "zeo_dapt_llama"
+BASE_TXT_ID = "inputrobo"
 # MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
 # MODEL_ID  =  "llama_8B_instruct"
 
@@ -47,16 +48,15 @@ def answer_llama(question):
     raw_answer = llm.invoke(prompt_text) 
     return raw_answer
 
-def gen_txt(cif_id, cif_dir="cif_files/MOR"):
-    cif = Path(os.path.join(cif_dir, f"{cif_id}.cif")).read_text()
+def gen_txt(cif_id, base_text):
 
-    question = f"Here is a cif file for a zeolite structure. Provide as much reliable information as possible for this material in descriptive sentences.\n {cif} \n **Answer**: "
+    question = f"Here is the structure description for a zeolite structure coded as {cif_id}. Provide as much reliable information as possible for this material in descriptive sentences.\n {base_text} \n **Answer**: "
 
     text = answer_llama(question)
 
     response = text.split("<|eot_id|><|start_header_id|>assistant<|end_header_id|>")[-1]
 
-    return response
+    return response.lstrip("\n")
 
 # TODO: Run this
 def split_df(all_txt_df_path, txt_dir, llm="llama-3-8B-instruct"):
@@ -102,14 +102,14 @@ if __name__ == "__main__":
 
     llm = HuggingFacePipeline(pipeline=text_pipeline, model_kwargs={"device":device})
 
-    files = glob.glob(f"{CIF_DIR}/*.cif")
-
+    base_df = pd.read_csv(BASE_DF_PATH)
     records = []
 
-    for file in tqdm(files):
-        cif_id = os.path.basename(file).split(".cif")[0]
+    for row in tqdm(base_df.itertuples(), total=len(base_df)):
+        cif_id = row.jid
+        base_text = row.text
         response = gen_txt(cif_id=cif_id,
-                          cif_dir=CIF_DIR)
+                          base_text=base_text)
         records.append(
             {
                 "cif_id": cif_id,
@@ -118,4 +118,4 @@ if __name__ == "__main__":
         )
 
     df = pd.DataFrame.from_records(records)
-    df.to_csv(f"generated_text/{MODEL_ID}.csv", index=False)
+    df.to_csv(f"generated_text/{MODEL_ID}_{BASE_TXT_ID}.csv", index=False)
