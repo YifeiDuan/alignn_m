@@ -666,6 +666,8 @@ if __name__ == "__main__":
         preprocess_data_mb(args)
     elif args.database == "zeo":
         preprocess_data_zeo(args)
+    elif args.database == "zeo_llm":
+        preprocess_data_zeo_llm(args)
     elif args.database == "jarvis" or args.database == "mp":
         preprocess_data_jv_mp(args)
     logging.info(f"Finished generate embeddings")
