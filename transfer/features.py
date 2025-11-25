@@ -348,7 +348,7 @@ def prepare_dataset_zeo_llm(args, prop="dac_hoa"):
         df_subset = df_subset.drop(df_subset.filter(like='Unnamed').columns, axis=1)
         ### Save the subset of merged multimodal data
         save_path = os.path.join(data_save_dir, f"{dataset_filename}_{subset}.csv")
-        print("save_path: " + save_path)
+        # print("save_path: " + save_path)
         df_subset.to_csv(save_path)
         logging.info(f"Saved subset dataset to {save_path}")
 
