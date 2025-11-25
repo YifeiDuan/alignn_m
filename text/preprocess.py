@@ -618,7 +618,7 @@ def preprocess_data_zeo_llm(args):
         text = row["response"]
        
 
-        inputs = tokenizer(text, truncation=True, return_tensors="pt").to(device)
+        inputs = tokenizer(text, max_length=max_token_length, truncation=True, return_tensors="pt").to(device)
         with torch.no_grad():
             with torch.cuda.amp.autocast():
                 output = model(**inputs)
