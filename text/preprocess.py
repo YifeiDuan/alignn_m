@@ -610,7 +610,7 @@ def preprocess_data_zeo_llm(args):
     if not args.cache_csv:
         raise Exception("please specify cache_csv: the csv file with generated text descriptions for each compound")
     
-    df_text = pd.read_csv(args.cache_csv, index_col = 0)
+    df_text = pd.read_csv(args.cache_csv)
 
     for num, row in tqdm(df_text.iterrows(), total=len(df_text), desc="Inferring vectorized text embeddings"):
 
