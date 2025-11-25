@@ -44,6 +44,7 @@ parser.add_argument('--input_dir', help='input text data directory', default="..
 parser.add_argument('--text', help='text sources for sample', choices=['raw', 'chemnlp', 'robo', 'combo'], default='robo', type=str, required=False)
 parser.add_argument('--llm', help='pre-trained llm to use', default='gpt2', type=str,required=False)
 parser.add_argument('--gen_llm', help='llm used to generate the text', default='llama-3-8B-instruct', type=str,required=False)
+parser.add_argument('--gen_prompt', help='llm used to generate the text', default='cif', type=str,required=False)
 parser.add_argument('--save_data', action='store_true')
 parser.add_argument('--gnn_only', action='store_true')
 parser.add_argument('--gnn_file_dir', help='pretrained gnn embedding directory', default="../alignn/embed_matbench_jdft2d/organized", type=str, required=False)
@@ -327,7 +328,7 @@ def prepare_dataset_zeo_llm(args, prop="dac_hoa"):
     df_embed = pd.read_csv(embed_file[0], index_col = 0).reset_index().rename(columns={'index': 'ids'})
 
     # 2. Prepare save names
-    dataset_filename = f"dataset_alignn_{args.gen_llm}_{args.llm.replace('/', '_')}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+    dataset_filename = f"dataset_alignn_{args.gen_llm}-input-{args.gen_prompt}_{args.llm.replace('/', '_')}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
     
     # 3. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
     data_save_dir = f"./data/{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
