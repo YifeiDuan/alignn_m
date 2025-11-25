@@ -313,20 +313,18 @@ def prepare_dataset_zeo_llm(args, prop="dac_hoa"):
     train_ratio = args.train_ratio
 
     # 1. Load text embeddings
-    text_embed_subdir = f"embedding_*"
     file_path = f"embeddings_{args.gen_llm}_{args.llm.replace('/', '_')}_*.csv"
     if args.input_dir:
-        file_path = os.path.join(text_embed_subdir, file_path)
         file_path = os.path.join(args.input_dir, file_path)
         print(file_path)    # Should be something like "YY/text/matbench_XX/embedding_XX/embeddings_MM_robo_*.csv"
     embed_file = glob.glob(file_path)
     if len(embed_file)>1:
         latest_file = max(embed_file, key=os.path.getctime)
         print("Latest file:", latest_file)
-        embed_file = latest_file
+        embed_file = [latest_file]
     
     logging.info(f"Found embedding file: {embed_file}")
-    df_embed = pd.read_csv(embed_file, index_col = 0).reset_index().rename(columns={'index': 'ids'})
+    df_embed = pd.read_csv(embed_file[0], index_col = 0).reset_index().rename(columns={'index': 'ids'})
 
     # 2. Prepare save names
     if args.gnn_only:
