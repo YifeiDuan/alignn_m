@@ -437,7 +437,7 @@ def prepare_dataset_zeo_llm_text_only(args, prop="dac_hoa"):
     df_embed = pd.read_csv(embed_file[0], index_col = 0).reset_index().rename(columns={'index': 'ids'})
 
     # 2. Prepare save names
-    dataset_filename = f"dataset_{args.gen_llm}_{args.llm}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+    dataset_filename = f"dataset_{args.gen_llm}-input-{args.gen_prompt}_{args.llm}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
 
     # 3. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
     data_save_dir = f"./data/text_only_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
