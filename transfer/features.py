@@ -416,6 +416,52 @@ def prepare_dataset_zeo_text_only(args, prop="dac_hoa"):
         df_subset.to_csv(save_path)
         logging.info(f"Saved subset dataset to {save_path}")
 
+def prepare_dataset_zeo_llm_text_only(args, prop="dac_hoa"):
+    sample_size = args.sample_size
+    start_id = args.start_id
+    train_ratio = args.train_ratio
+
+    # 1. Load text embeddings
+    file_path = f"embeddings_*_{args.llm.replace('/', '_')}_{args.text}.csv"
+    if args.input_dir:
+        file_path = os.path.join(args.input_dir, file_path)
+        print(file_path)    # Should be something like "YY/text/matbench_XX/embedding_XX/embeddings_MM_robo_*.csv"
+    embed_file = glob.glob(file_path)
+
+    if len(embed_file)>1:
+        latest_file = max(embed_file, key=os.path.getctime)
+        print("Latest file:", latest_file)
+        embed_file = [latest_file]
+    
+    logging.info(f"Found embedding file: {embed_file}")
+    df_embed = pd.read_csv(embed_file[0], index_col = 0).reset_index().rename(columns={'index': 'ids'})
+
+    # 2. Prepare save names
+    dataset_filename = f"dataset_{args.gen_llm}_{args.llm}_prop_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+
+    # 3. Multimodal feature concat: Merge text emebddings with GNN-inferred embeddings
+    data_save_dir = f"./data/text_only_{prop}_start_{start_id}_sample_{sample_size}_train_{train_ratio}"
+    if not os.path.exists(data_save_dir):
+        os.makedirs(data_save_dir)
+
+    # TODO: Process split-specific merging
+    if args.gnn_file_dir:
+        gnn_file_dir = args.gnn_file_dir      # direct parent dir of the gnn embedding file
+
+
+    for subset in ["train", "val", "test"]:
+        df_subset = pd.read_csv(os.path.join(gnn_file_dir, f"data_{subset}.csv"))
+        df_subset = df_subset[["jid", "target"]]
+        df_subset = df_subset.merge(df_embed, how='inner', left_on="jid", right_on="ids", suffixes=('_gnn', '_lm'))
+        print(df_subset.head())
+        df_subset["target"] = df_subset.pop("target")       # Reordering columns, "matbench_PROP" to the last col
+        df_subset["ids"] = df_subset.pop("ids")     # Reordering columns, "ids" to the last col
+        df_subset["jid"] = df_subset.pop("jid")     # Reordering columns, "id" to the last col
+        df_subset = df_subset.drop(df_subset.filter(like='Unnamed').columns, axis=1)
+        ### Save the subset of merged multimodal data
+        save_path = os.path.join(data_save_dir, f"{dataset_filename}_{subset}.csv")
+        df_subset.to_csv(save_path)
+        logging.info(f"Saved subset dataset to {save_path}")
 
 
 def prepare_dataset_zeo_rand_text(args, prop="dac_hoa"):
@@ -530,6 +576,9 @@ if __name__ == "__main__":
     elif args.database == "zeo_text":
         prop = args.prop
         prepare_dataset_zeo_text_only(args, prop)
+    elif args.database == "zeo_llm_text":
+        prop = args.prop
+        prepare_dataset_zeo_llm_text_only(args, prop)
     elif args.database == "zeo_rand_text":
         prop = args.prop
         prepare_dataset_zeo_rand_text(args, prop)
