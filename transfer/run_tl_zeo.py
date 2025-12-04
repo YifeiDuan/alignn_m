@@ -63,9 +63,7 @@ def run_regressor_rf(args):
         df_base_name = f"dataset_{args.llm}_randtext_prop_{substring}"
     if "input" in args.text:    # LLM generated text
         df_base_name = f"dataset_{args.gnn}_{args.text}_{args.llm}_prop_{session_name}"
-    if ("text only" in session_name) and ("input" in args.text):
-        substring = session_name.split("text_only_")[-1]
-        df_base_name = f"dataset_{args.gnn}_{args.text}_{args.llm}_prop_{substring}"
+        df_base_name = df_base_name.replace("_text_only", "")
     df_train = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_train.csv")).reset_index(drop=True)
     df_val   = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_val.csv")).reset_index(drop=True)
     df_test  = pd.read_csv(os.path.join(data_dir, f"{df_base_name}_test.csv")).reset_index(drop=True)
