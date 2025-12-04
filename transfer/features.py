@@ -422,10 +422,10 @@ def prepare_dataset_zeo_llm_text_only(args, prop="dac_hoa"):
     train_ratio = args.train_ratio
 
     # 1. Load text embeddings
-    file_path = f"embeddings_*_{args.llm.replace('/', '_')}_{args.text}.csv"
+    file_path = f"embeddings_{args.gen_llm}_{args.llm.replace('/', '_')}_*.csv"
     if args.input_dir:
         file_path = os.path.join(args.input_dir, file_path)
-        print(file_path)    # Should be something like "YY/text/matbench_XX/embedding_XX/embeddings_MM_robo_*.csv"
+        print(file_path)
     embed_file = glob.glob(file_path)
 
     if len(embed_file)>1:
