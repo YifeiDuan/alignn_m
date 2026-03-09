@@ -8,7 +8,7 @@ import sys
 import json
 import zipfile
 from alignn.data import get_train_val_loaders
-from alignn.train import train_dgl_prop
+from alignn.train import train_dgl_prop, train_dgl_prop_new
 from alignn.config import TrainingConfig
 from jarvis.db.jsonutils import loadjson
 import argparse
@@ -330,7 +330,19 @@ def train_for_folder(
     t1 = time.time()
     print("rank", rank)
     print("world_size", world_size)
-    train_dgl_prop(
+    # train_dgl_prop(
+    #     config,
+    #     model=model,
+    #     train_val_test_loaders=[
+    #         train_loader,
+    #         val_loader,
+    #         test_loader,
+    #         prepare_batch,
+    #     ],
+    #     rank=rank,
+    #     world_size=world_size,
+    # )
+    train_dgl_prop_new(
         config,
         model=model,
         train_val_test_loaders=[
