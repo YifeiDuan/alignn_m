@@ -1,6 +1,5 @@
-# Project Title
-
-> Short one-line description of what your project does.
+# Multimodal ALIGNN
+>Adapted ALIGNN for multimodal integration methods: (1) Text-Attributed Graph (TAG); (2) Embedding Transfer
 
 ---
 
