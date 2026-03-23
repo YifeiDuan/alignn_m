@@ -454,6 +454,7 @@ class Graph(object):
         # use_canonize: bool = False,
         use_lattice_prop: bool = False,
         cutoff_extra=3.5,
+        tag_method="concat",
         text_embed_path="tag/atom_text_embeddings/llmprior.csv"   
         # TODO: modify other .py accordingly: tag=true, text_embed_path="..."
     ):
@@ -494,7 +495,12 @@ class Graph(object):
             
             ## TODO: concat textual embeddings to feat
             atom_text_feat = list(atom_embed_df[atom_embed_df["element"]==s].drop(columns=["element"]).iloc[0])
-            feat = atom_feat + atom_text_feat
+            feat = atom_feat
+            if tag_method == "concat":
+                feat = atom_feat + atom_text_feat 
+            elif tag_method == "residue":
+                atom_text_feat = atom_text_feat[:len(atom_feat)]
+                feat = [x + 0.15*y for x, y in zip (atom_feat, atom_text_feat)]
             # if include_prdf_angles:
             #    feat=feat+list(prdf[ii])+list(adf[ii])
             sps_features.append(feat)

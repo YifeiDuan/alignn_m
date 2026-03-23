@@ -98,6 +98,7 @@ class TorchLMDBDataset(Dataset):
 def get_torch_dataset(
     dataset=[],
     tag=False,  # Flag for whether to use tag text attributes for atoms
+    tag_method="concat",
     id_tag="jid",
     target="",
     target_atomwise="",
@@ -164,6 +165,7 @@ def get_torch_dataset(
                     use_canonize=use_canonize,
                     cutoff_extra=cutoff_extra,
                     # TODO: Modify text_embed_path
+                    tag_method=tag_method,
                     text_embed_path="atom_text_embeddings/llmprior_pca100.csv"
                 )
             if line_graph:
