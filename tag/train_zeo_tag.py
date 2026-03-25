@@ -389,6 +389,8 @@ def train_for_folder(
     ) = get_train_val_loaders(
         dataset_array=dataset,  # dataset is a list of info {"jid":id, "atoms": Atoms as dict, "target": prop value}
         tag=True,
+        tag_method="concat",
+        text_embed_path=config.text_embed_path,
         target="target",
         target_atomwise=target_atomwise,
         target_grad=target_grad,
