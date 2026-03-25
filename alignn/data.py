@@ -120,6 +120,7 @@ def get_train_val_loaders(
     dataset_array=None,
     tag=False,  # Default tag=False
     tag_method="concat",
+    text_embed_path="atom_text_embeddings/llmprior_pca100.csv",
     target: str = "formation_energy_peratom",
     target_atomwise: str = "",
     target_grad: str = "",
@@ -374,6 +375,7 @@ def get_train_val_loaders(
             dataset=dataset_train,
             tag=tag,    # Flag for whether to use tag, i.e. adding text attributes for atoms
             tag_method=tag_method,
+            text_embed_path=text_embed_path,
             id_tag=id_tag,  # id_tag is not relevant to text-attributed-graph (tag)
             atom_features=atom_features,
             target=target,
@@ -398,6 +400,7 @@ def get_train_val_loaders(
             get_torch_dataset(
                 dataset=dataset_val,
                 tag=tag,    # Flag for whether to use tag, i.e. adding text attributes for atoms
+                text_embed_path=text_embed_path,
                 id_tag=id_tag,  # id_tag is not relevant to text-attributed-graph (tag)
                 atom_features=atom_features,
                 target=target,
@@ -425,6 +428,7 @@ def get_train_val_loaders(
             get_torch_dataset(
                 dataset=dataset_test,
                 tag=tag,    # Flag for whether to use tag, i.e. adding text attributes for atoms
+                text_embed_path=text_embed_path,
                 id_tag=id_tag,  # id_tag is not relevant to text-attributed-graph (tag)
                 atom_features=atom_features,
                 target=target,

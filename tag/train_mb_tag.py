@@ -295,6 +295,7 @@ def train_for_folder(
         dataset_array=dataset,
         tag=True,   # TAG: inject atom-level text embeddings into node features
         tag_method="concat",
+        text_embed_path=config.text_embed_path,
         target="target",
         target_atomwise=target_atomwise,
         target_grad=target_grad,
